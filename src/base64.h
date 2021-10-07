@@ -1,7 +1,20 @@
+/**
+    base64.h
+    Purpose: Defines functions for encoding strings into base64
+    Taken from https://stackoverflow.com/questions/180947/base64-decode-snippet-in-c
+
+    @author Ed Parrish
+    @version 1.1 4/10/16
+*/
+
+#pragma once
 #include <iostream>
 #include <vector>
 
 typedef unsigned char uchar;
+static std::string base64_encode(const std::string& in);
+static std::string base64_decode(const std::string& in);
+
 
 static std::string base64_encode(const std::string& in) {
 

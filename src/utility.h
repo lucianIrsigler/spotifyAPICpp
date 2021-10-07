@@ -1,3 +1,11 @@
+/**
+    utility.h
+    Purpose: Creates a namespace that contains utility functions for cURL operations and text generation
+
+    @author Lucian Irsigler
+    @version 1.0 07/10/2021
+*/
+
 #pragma once
 #include <string>
 #include <iostream>
@@ -98,4 +106,3 @@ namespace utility{
         }
     }
 };
-

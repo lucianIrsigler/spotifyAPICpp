@@ -48,7 +48,7 @@ public:
 		return *this;
 	}
 	//Authorizing
-	void basicauthorize(std::string scope);
+	void basicauthorize(std::string scopes);
 	void authorizePCKE();
 
 	//User info
