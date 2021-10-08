@@ -22,3 +22,6 @@ void testUser(Spotify& instance) {
     std::cout << "User URI:" << instance.getUserURI() << std::endl;
 }
 
+void testPlayer(Spotify& instance) {
+    std::cout << instance.getUserCurrentPlaying() << std::endl;
+}
