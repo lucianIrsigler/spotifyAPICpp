@@ -6,6 +6,7 @@
 #include "utility.h"
 #include <algorithm>
 #include <stdlib.h>
+#include "spotifyexception.h"
 
 class Spotify
 {
@@ -24,6 +25,7 @@ public:
 	Spotify(const Spotify& spotify) = delete;
 
 	//rvalue
+
 	Spotify(Spotify&& other) noexcept {
 		printf("Moved\n");
 		spotifyAuthenticityToken = other.spotifyAuthenticityToken;
@@ -39,6 +41,7 @@ public:
 	};
 
 	//rvalue move
+
 	Spotify& operator=(Spotify&& other) noexcept {
 		spotifyAuthenticityToken = other.spotifyAuthenticityToken;
 		spotifyClientID = other.spotifyClientID;
@@ -48,10 +51,12 @@ public:
 		return *this;
 	}
 	//Authorizing
+
 	void basicauthorize(std::string scopes);
 	void authorizePCKE();
 
 	//User info
+
 	std::string getUserInfo();
 	std::string getDisplayName();
 	std::string getUserURL();
@@ -61,29 +66,68 @@ public:
 	std::string getUserType();
 	std::string getUserURI();
 
-	//PLAYER
-	std::string getUserPlaylists(int limit);
+	//Playlist
+
+	std::string getSearchedUserPlaylists(std::string userID, int limit, int offset);
+	std::string getUserPlaylists(int limit, int offset);
+	std::string getPlaylist(std::string playlistID, std::string market, std::string fields);
+	std::string getPlaylistCover(std::string playlistID);
+	std::string getPlaylistItems(std::string playlistID, std::string market, std::string fields, int limit, int offset);
+	void createPlaylist(std::string userID, std::string requestBody);
+	void addItemToPlaylist(std::string playlistID, int position, std::string URI, std::string requestBody);
+	void deleteItemFromPlaylist(std::string playlistID, std::string requestBody);
+	void updatePlaylistItems(std::string playlistID, std::string URIs, std::string requestBody);
+	void changePlaylistDetails(std::string playlistID, std::string requestBody);
+
+
+	//Player
+
+	std::string getUserRecentPlaying(int limit);
+	std::string getUserPlaybackState();
+	void transferUserPlayback();
+	std::string getAvialableDevices();
 	std::string getUserCurrentPlaying();
+	void resumeUserPlayback();
+	void pauseUserPlayback();
+	void skipToNextTrack();
+	void skipToPreviousTrack();
+	void seekToPositionCurrentTrack();
+	void setRepeatOnPlayback();
+	void setVolumeOnPlayback();
+	void toggleShuffleOnPlayback();
+	void addSongToUserQueue(std::string URI, std::string deviceID);
+
 
 	//Getters
+
 	std::string getToken();
 	std::string getClientID();
 	std::string getClientSecret();
 
 	//Setters
+
 	void setToken(std::string userToken);
 	void setClientID(std::string userspotifyClientID);
 	void setClientSecret(std::string userspotifyClientSecret);
 
 	//Scopes
+
 	std::vector<std::string> spotifyScopes();
 	bool validateScopes(std::string userScopes);
 
+	//Acquire another token
+
+	void refreshToken();
+
+
+	//utility
+	bool isLimitsAndOffsetInvalid(int limit, int offset);
 private:
 	std::string spotifyAuthenticityToken;
 	std::string spotifyClientID;
 	std::string spotifyClientSecret;
 	std::string spotifyRedirectURI;
 	std::string spotifyRefreshToken;
+	std::string spotifyClassScopes;
 };
 
