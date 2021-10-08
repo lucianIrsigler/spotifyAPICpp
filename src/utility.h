@@ -73,6 +73,9 @@ namespace utility{
             //Returns the buffer
             return readBuffer;
         }
+        else {
+            return "ERROR: curl failed";
+        }
     }
 
     static std::string performCURLPOST(std::string website, std::string POSTdata,struct curl_slist* list) {
@@ -94,15 +97,20 @@ namespace utility{
 
             res = curl_easy_perform(curl);
 
-            if (res != CURLE_OK)
+            if (res != CURLE_OK) {
                 fprintf(stderr, "curl_easy_perform() failed: %s\n",
                     curl_easy_strerror(res));
-
+                return "ERROR: HTTP POST request failed";
+            }
             curl_easy_cleanup(curl);
 
             curl_global_cleanup();
 
             return readBuffer;
         }
+        else {
+            return "ERROR: curl failed";
+        }
     }
+
 };
