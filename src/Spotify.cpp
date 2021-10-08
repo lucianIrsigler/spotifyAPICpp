@@ -317,24 +317,306 @@ std::string Spotify::getUserURI() {
 }
 
 
-//PLAYER
-std::string Spotify:: getUserPlaylists(int limit) {
+//Playlist
+
+/*
+
+*/
+std::string Spotify::getSearchedUserPlaylists(std::string userID, int limit, int offset) {
+    //https://developer.spotify.com/console/get-playlists/
+
+    if (spotifyClassScopes.find("playlist-read-private") == std::string::npos ||
+        spotifyClassScopes.find("playlist-read-collaborative") == std::string::npos) 
+    {
+        throw spotifyException("ERROR:'playlist-read-private' and 'playlist-read-collaborative' scope is required");
+    } 
+    if (isLimitsAndOffsetInvalid(limit, offset)) {
+        throw spotifyException("ERROR: Invalid limit/offset");
+    }
+    return "";
+}
+
+
+/*
+
+
+*/
+std::string Spotify::getUserPlaylists(int limit, int offset){
+    //https://developer.spotify.com/console/get-current-user-playlists/
+
+    if (spotifyClassScopes.find("playlist-read-private") == std::string::npos)
+    {
+        throw spotifyException("ERROR:'playlist-read-private' scope is required");
+    }
+
+    if (isLimitsAndOffsetInvalid(limit, offset)) {
+        throw spotifyException("ERROR: Invalid limit/offset");
+    }
+
     //Used for headers
     struct curl_slist* list = NULL;
-    if (limit <= 0 || limit > 50) {
-        return "INVALID LIMIT";
-    }
+    
     //Required headers
     list = curl_slist_append(list, "Accept: application/json");
     list = curl_slist_append(list, "Content-Type: application/json");
     list = curl_slist_append(list, ("Authorization: Bearer " + spotifyAuthenticityToken).c_str());
 
     //Buffer to write to
-    std::string readBuffer = utility::performCURLGET("https://api.spotify.com/v1/me/playlists?"+std::to_string(limit), list);
+    std::string readBuffer = utility::performCURLGET("https://api.spotify.com/v1/me/playlists?" + std::to_string(limit), list);
 
     return readBuffer;
 }
 
+/*
+
+*/
+std::string Spotify::getPlaylist(std::string playlistID, std::string market, std::string fields) {
+    //https://developer.spotify.com/console/get-playlist/
+
+    return "";
+}
+
+/*
+
+*/
+std::string Spotify::getPlaylistCover(std::string playlistID) {
+    //https://developer.spotify.com/console/get-playlist-images/
+
+    return "";
+}
+
+/*
+
+*/
+std::string Spotify::getPlaylistItems(std::string playlistID, std::string market, std::string fields, int limit, int offset) {
+    //https://developer.spotify.com/console/get-playlist-tracks/
+
+    if (spotifyClassScopes.find("playlist-read-public") == std::string::npos ||
+        spotifyClassScopes.find("playlist-read-private") == std::string::npos) 
+    {
+        throw spotifyException("ERROR:'playlist-read-private' and 'playlist-read-public' scope is required");
+    }
+
+    if (isLimitsAndOffsetInvalid(limit, offset)) {
+        throw spotifyException("ERROR: Invalid limit/offset");
+    }
+    return "";
+}
+
+/*
+
+*/
+void Spotify::createPlaylist(std::string userID, std::string requestBody) {
+    //https://developer.spotify.com/console/post-playlists/
+
+    if (spotifyClassScopes.find("playlist-modify-public") == std::string::npos ||
+        spotifyClassScopes.find("playlist-modify-private") == std::string::npos)
+    {
+        throw spotifyException("ERROR:'playlist-modify-private' and 'playlist-modify-public' scope is required");
+    }
+}
+
+/*
+
+*/
+void Spotify::addItemToPlaylist(std::string playlistID, int position, std::string URI, std::string requestBody) {
+    //https://developer.spotify.com/console/post-playlist-tracks/
+
+    if (spotifyClassScopes.find("playlist-modify-public") == std::string::npos ||
+        spotifyClassScopes.find("playlist-modify-private") == std::string::npos)
+    {
+        throw spotifyException("ERROR:'playlist-modify-private' and 'playlist-modify-public' scope is required");
+    }
+}
+
+/*
+
+*/
+void Spotify::deleteItemFromPlaylist(std::string playlistID, std::string requestBody) {
+    //https://developer.spotify.com/console/delete-playlist-tracks/
+
+    if (spotifyClassScopes.find("playlist-modify-public") == std::string::npos ||
+        spotifyClassScopes.find("playlist-modify-private") == std::string::npos)
+    {
+        throw spotifyException("ERROR:'playlist-modify-private' and 'playlist-modify-public' scope is required");
+    }
+}
+
+/*
+
+*/
+void Spotify::updatePlaylistItems(std::string playlistID, std::string URIs, std::string requestBody) {
+    //https://developer.spotify.com/console/put-playlist-tracks/
+
+    if (spotifyClassScopes.find("playlist-modify-public") == std::string::npos ||
+        spotifyClassScopes.find("playlist-modify-private") == std::string::npos)
+    {
+        throw spotifyException("ERROR:'playlist-modify-private' and 'playlist-modify-public' scope is required");
+    }
+}
+
+/*
+
+*/
+void Spotify::changePlaylistDetails(std::string playlistID, std::string requestBody) {
+    //https://developer.spotify.com/console/put-playlist/
+
+    if (spotifyClassScopes.find("playlist-modify-public") == std::string::npos ||
+        spotifyClassScopes.find("playlist-modify-private") == std::string::npos)
+    {
+        throw spotifyException("ERROR:'playlist-modify-private' and 'playlist-modify-public' scope is required");
+    }
+}
+
+/*
+
+*/
+
+//Player
+
+/*
+
+*/
+std::string Spotify:: getUserRecentPlaying(int limit) {
+    if (spotifyClassScopes.find("user-read-recently-played") == std::string::npos) {
+        throw spotifyException("ERROR:'user-read-recently-played' scope is required");
+    }
+
+    //Creates storage unit for necessary headers
+    struct curl_slist* list = NULL;
+
+    //Appends the required headers
+    list = curl_slist_append(list, "Accept: application/json");
+    list = curl_slist_append(list, "Content-Type: application/json");
+    list = curl_slist_append(list, ("Authorization: Bearer " + spotifyAuthenticityToken).c_str());
+
+    //acquires user data and stores in variable readBuffer
+    std::string readBuffer = utility::performCURLGET("https://api.spotify.com/v1/me/player/recently-played", list);
+
+    return readBuffer;
+}
+
+/*
+
+*/
+std::string Spotify:: getUserPlaybackState() {
+    if (spotifyClassScopes.find("user-read-playback-state") == std::string::npos) {
+        throw spotifyException("ERROR:'user-read-playback-state' scope is required");
+    }
+
+    //Creates storage unit for necessary headers
+    struct curl_slist* list = NULL;
+
+    //Appends the required headers
+    list = curl_slist_append(list, "Accept: application/json");
+    list = curl_slist_append(list, "Content-Type: application/json");
+    list = curl_slist_append(list, ("Authorization: Bearer " + spotifyAuthenticityToken).c_str());
+
+    //acquires user data and stores in variable readBuffer
+    std::string readBuffer = utility::performCURLGET("https://api.spotify.com/v1/me/player/recently-played", list);
+
+    return readBuffer;
+}
+
+/*
+
+*/
+void Spotify::transferUserPlayback() {
+
+}
+
+/*
+
+*/
+std::string Spotify::getAvialableDevices() {
+    return "";
+}
+
+/*
+
+*/
+std::string Spotify::getUserCurrentPlaying(){
+    if (spotifyClassScopes.find("user-read-currently-playing") == std::string::npos) {
+        return "ERROR:'user-read-currently-playing' scope is required";
+    }
+
+    //Creates storage unit for necessary headers
+    struct curl_slist* list = NULL;
+
+    //Appends the required headers
+    list = curl_slist_append(list, "Accept: application/json");
+    list = curl_slist_append(list, "Content-Type: application/json");
+    list = curl_slist_append(list, ("Authorization: Bearer " + spotifyAuthenticityToken).c_str());
+
+    //acquires user data and stores in variable readBuffer
+    std::string readBuffer = utility::performCURLGET("https://api.spotify.com/v1/me/player/currently-playing", list);
+
+    return readBuffer;
+
+}
+
+/*
+
+*/
+void Spotify::resumeUserPlayback(){
+
+}
+
+/*
+
+*/
+void Spotify::pauseUserPlayback(){
+
+}
+
+/*
+
+*/
+void Spotify::skipToNextTrack(){
+
+}
+
+/*
+
+*/
+void Spotify::skipToPreviousTrack(){
+
+}
+
+/*
+
+*/
+void Spotify::seekToPositionCurrentTrack(){
+
+}
+
+/*
+
+*/
+void Spotify::setRepeatOnPlayback(){
+
+}
+
+/*
+
+*/
+void Spotify::setVolumeOnPlayback(){
+
+}
+
+/*
+
+*/
+void Spotify::toggleShuffleOnPlayback(){
+
+}
+
+/*
+
+*/
+void Spotify::addSongToUserQueue(std::string URI, std::string deviceID){
+
+}
 
 /*Getters*/
 
