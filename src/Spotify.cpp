@@ -16,6 +16,7 @@ void Spotify::basicauthorize(std::string scopes) {
     //Checks if scopes are valid
     if (validateScopes(scopes)) {
         std::cout << "Valid scopes" << std::endl;
+        spotifyClassScopes = scopes;
     }
     else {
         std::cout << "Invalid scopes" << std::endl;
@@ -30,9 +31,10 @@ void Spotify::basicauthorize(std::string scopes) {
     std::string requestURL = "https://accounts.spotify.com/authorize?client_id=" + spotifyClientID
         + "&response_type=code"
         + "&redirect_uri=" + spotifyRedirectURI
-        + "&state=" + state;
+        + "&state=" + state
         + "&scope=" + scopes;
 
+    std::cout << requestURL << std::endl;
     //Converts to LPCWSTR so requestURL can be used in the shell
     std::wstring temp = std::wstring(requestURL.begin(), requestURL.end());
     LPCWSTR search = temp.c_str();
@@ -453,4 +455,57 @@ bool Spotify::validateScopes(std::string userScopes) {
     }
     
     return true;
+}
+
+/*
+    Trades refresh token for another OAuth2 token
+*/
+void Spotify::refreshToken() {
+    std::cout << "Trading code for OAuth2 token..." << std::endl;
+
+    //Creating the POST data for the OAuth2 token request
+    std::string postData = "client_id=" + spotifyClientID
+        + "&grant_type=authorization_code"
+        + "&code=" + spotifyRefreshToken
+        + "&redirect_uri=https://www.google.com";
+
+    //Creating the headers
+    struct curl_slist* list = NULL;
+
+    //The client ID and client secret needs to be in the form:
+    //  client ID:client secret
+    //and encoded in base64
+    list = curl_slist_append(list, ("Authorization: Basic " + base64_encode(spotifyClientID + ":" + spotifyClientSecret)).c_str());
+
+    //Performs POST request and saves the resulting token JSON in readBuffer
+    std::string readBuffer = utility::performCURLPOST("https://accounts.spotify.com/api/token", postData, list);
+
+    //std::cout << readBuffer << std::endl;
+
+    //Offset to the start of the access token code in readBuffer
+    int first = 17;
+
+    //Sets the class's Token as the readBuffer's access token
+    spotifyAuthenticityToken = readBuffer.substr(first, readBuffer.find("token_type") - first - 3);
+
+    //Finds the first index of the refresh token
+    //The '16' is the offset from the first index of readBuffer.find("refresh_token")
+    int refreshFirst = readBuffer.find("refresh_token") + 16;
+
+    //Sets the class's refresh token as the readBuffer's refresh token
+    spotifyRefreshToken = readBuffer.substr(refreshFirst, readBuffer.length() - refreshFirst - 2);
+}
+
+//Utility
+
+/*
+    Checks if the limit and offset are invalid.
+    Limit must be within the range of [1,50).
+    Offset must be within the range of [0,10000).
+    Inverse of conjunction is returned- as if both statements are true- then the function returns false
+
+    @returns the inverse of the truth Conjunction of the two statements.
+*/
+bool Spotify::isLimitsAndOffsetInvalid(int limit, int offset) {
+    return !((1 <= limit && limit < 50) && (0 <= offset && offset < 10000));
 }
