@@ -10,17 +10,12 @@
 */
 void Spotify::basicauthorize(std::string scopes) { 
     
-    std::cout << "Starting Basic authorizing..." << std::endl;
-    std::cout << "Validating scopes..." << std::endl;
-
     //Checks if scopes are valid
     if (validateScopes(scopes)) {
-        std::cout << "Valid scopes" << std::endl;
         spotifyClassScopes = scopes;
     }
     else {
-        std::cout << "Invalid scopes" << std::endl;
-        return;
+        throw spotifyException("Invalid scopes");
     }
 
     //A state is a random combination of characters that provides additional protection against threats like
@@ -34,14 +29,14 @@ void Spotify::basicauthorize(std::string scopes) {
         + "&state=" + state
         + "&scope=" + scopes;
 
-    std::cout << requestURL << std::endl;
+    //std::cout << requestURL << std::endl;
+    // 
     //Converts to LPCWSTR so requestURL can be used in the shell
     std::wstring temp = std::wstring(requestURL.begin(), requestURL.end());
     LPCWSTR search = temp.c_str();
 
 
     //Opens the shell to open the browser and redirect to the requestURL
-    std::cout << "Opening console..." << std::endl;
     ShellExecute(0, 0, search, 0, 0, SW_SHOW);
 
     std::cout << "Click the Authorize button then copy paste the URL of the redirect:" << std::endl;
@@ -76,7 +71,7 @@ void Spotify::basicauthorize(std::string scopes) {
 
     //Performs POST request and saves the resulting token JSON in readBuffer
     std::string readBuffer=utility::performCURLPOST("https://accounts.spotify.com/api/token", postData, list);
-    
+    std::cout << "\n\n" << readBuffer << "\n\n" << std::endl;
     //std::cout << readBuffer << std::endl;
     
     //Offset to the start of the access token code in readBuffer
@@ -90,14 +85,16 @@ void Spotify::basicauthorize(std::string scopes) {
     int refreshFirst = readBuffer.find("refresh_token")+16;
 
     //Sets the class's refresh token as the readBuffer's refresh token
-    spotifyRefreshToken = readBuffer.substr(refreshFirst, readBuffer.length() - refreshFirst - 2);
-    std::cout << "OAuth2 acquired!" << std::endl;
+    spotifyRefreshToken = readBuffer.substr(refreshFirst, readBuffer.find('"',refreshFirst)-refreshFirst);
+
+    //std::cout << spotifyRefreshToken << std::endl;
 
     /*Example token JSON
     {
     "access_token":"<code>",
     "token_type":"Bearer","expires_in":3600,
-    "spotifyRefreshToken":"<code>"
+    "spotifyRefreshToken":"<code>",
+    "scope":"<scopes>"
     }*/
 
 }
@@ -333,7 +330,24 @@ std::string Spotify::getSearchedUserPlaylists(std::string userID, int limit, int
     if (isLimitsAndOffsetInvalid(limit, offset)) {
         throw spotifyException("ERROR: Invalid limit/offset");
     }
-    return "";
+    std::string url = "https://api.spotify.com/v1/users/" + userID + "/playlists?" + std::to_string(limit) + "&offset" + std::to_string(offset);
+
+    //Creates storage unit for necessary headers
+    struct curl_slist* list = NULL;
+
+    //Appends the required headers
+    list = curl_slist_append(list, "Accept: application/json");
+    list = curl_slist_append(list, "Content-Type: application/json");
+    list = curl_slist_append(list, ("Authorization: Bearer " + spotifyAuthenticityToken).c_str());
+
+
+    std::string readBuffer = utility::performCURLGET(url, list);
+
+    if (readBuffer.find("\"status\" : 404,") != std::string::npos) {
+        throw spotifyException("ERROR:Invalid user ID");
+    }
+
+    return readBuffer;
 }
 
 
@@ -364,6 +378,9 @@ std::string Spotify::getUserPlaylists(int limit, int offset){
     //Buffer to write to
     std::string readBuffer = utility::performCURLGET("https://api.spotify.com/v1/me/playlists?" + std::to_string(limit), list);
 
+    if (readBuffer.find("\"status\" : 404,") != std::string::npos) {
+        throw spotifyException("ERROR:Invalid user ID");
+    }
     return readBuffer;
 }
 
@@ -373,7 +390,26 @@ std::string Spotify::getUserPlaylists(int limit, int offset){
 std::string Spotify::getPlaylist(std::string playlistID, std::string market, std::string fields) {
     //https://developer.spotify.com/console/get-playlist/
 
-    return "";
+    std::string url = "https://api.spotify.com/v1/playlists/"
+        + playlistID
+        + "?market=" + market
+        + "fields" + fields;
+    
+    //Used for headers
+    struct curl_slist* list = NULL;
+
+    //Required headers
+    list = curl_slist_append(list, "Accept: application/json");
+    list = curl_slist_append(list, "Content-Type: application/json");
+    list = curl_slist_append(list, ("Authorization: Bearer " + spotifyAuthenticityToken).c_str());
+
+    std::string readBuffer = utility::performCURLGET(url, list);
+
+    if (readBuffer.find("\"status\" : 404,") != std::string::npos) {
+        throw spotifyException("ERROR:Invalid user ID");
+    }
+
+    return readBuffer;
 }
 
 /*
@@ -382,25 +418,72 @@ std::string Spotify::getPlaylist(std::string playlistID, std::string market, std
 std::string Spotify::getPlaylistCover(std::string playlistID) {
     //https://developer.spotify.com/console/get-playlist-images/
 
-    return "";
+    std::string url = "https://api.spotify.com/v1/playlists/" + playlistID + "/images";
+
+    //Used for headers
+    struct curl_slist* list = NULL;
+
+    //Required headers
+    list = curl_slist_append(list, "Accept: application/json");
+    list = curl_slist_append(list, "Content-Type: application/json");
+    list = curl_slist_append(list, ("Authorization: Bearer " + spotifyAuthenticityToken).c_str());
+
+    std::string readBuffer = utility::performCURLGET(url, list);
+
+    if (readBuffer.find("\"status\" : 404,") != std::string::npos) {
+        throw spotifyException("ERROR:not found");
+    }
+
+    return readBuffer;
 }
 
 /*
 
 */
-std::string Spotify::getPlaylistItems(std::string playlistID, std::string market, std::string fields, int limit, int offset) {
+std::string Spotify::getPlaylistItems(std::string playlistID, std::string market, std::string fields, int limit=20, int offset=0) {
     //https://developer.spotify.com/console/get-playlist-tracks/
 
-    if (spotifyClassScopes.find("playlist-read-public") == std::string::npos ||
-        spotifyClassScopes.find("playlist-read-private") == std::string::npos) 
+    if (spotifyClassScopes.find("playlist-read-private") == std::string::npos) 
     {
-        throw spotifyException("ERROR:'playlist-read-private' and 'playlist-read-public' scope is required");
+        throw spotifyException("ERROR:'playlist-read-private' scope is required");
     }
 
     if (isLimitsAndOffsetInvalid(limit, offset)) {
         throw spotifyException("ERROR: Invalid limit/offset");
     }
-    return "";
+
+    std::string url = "https://api.spotify.com/v1/playlists/" + playlistID + "/tracks?";
+
+    if (market != "") {
+        url += "market=" + market;
+    }
+    if (fields != "") {
+        url = "&fields=" + fields;
+    }
+
+    url += "&limit=" + std::to_string(limit);
+    url+="&offset=" + std::to_string(offset);
+    //Used for headers
+    struct curl_slist* list = NULL;
+
+    //Required headers
+    list = curl_slist_append(list, "Accept: application/json");
+    list = curl_slist_append(list, "Content-Type: application/json");
+    list = curl_slist_append(list, ("Authorization: Bearer " + spotifyAuthenticityToken).c_str());
+
+    std::string readBuffer = utility::performCURLGET(url, list);
+
+    if (readBuffer.find("Invalid playlist Id") != std::string::npos) {
+        throw spotifyException("ERROR:Invalid playlist Id");
+    }
+    else if (readBuffer.find("Invalid market code") != std::string::npos) {
+        throw spotifyException("ERROR:Invalid market code");
+    }
+    else if (readBuffer.find("\"status\" : 404,") != std::string::npos) {
+        throw spotifyException("ERROR:not found");
+    }
+
+    return readBuffer;
 }
 
 /*
@@ -618,59 +701,6 @@ void Spotify::addSongToUserQueue(std::string URI, std::string deviceID){
 
 }
 
-/*Getters*/
-
-/*
-    Gets spotifyAuthenticityToken
-    @returns spotifyAuthenticityToken
-*/
-std::string Spotify::getToken() {
-    return spotifyAuthenticityToken;
-}
-
-/*
-    Gets spotifyClientID
-    @returns spotifyClientID
-*/
-std::string Spotify::getClientID() {
-    return spotifyClientID;
-}
-
-/*
-    Gets spotifyClientSecret
-    @returns spotifyClientSecret
-*/
-std::string Spotify::getClientSecret() {
-    return spotifyClientSecret;
-}
-
-/*Setters*/
-
-/*
-    Sets spotifyAuthenticityToken
-    @param userToken- new spotifyAuthenticityToken
-*/
-void Spotify::setToken(std::string userToken) {
-    spotifyAuthenticityToken = userToken;
-}
-
-/*
-    Sets spotifyClientID
-    @param userspotifyClientID- new spotifyClientID
-*/
-void Spotify::setClientID(std::string userspotifyClientID) {
-    spotifyClientID = userspotifyClientID;
-}
-
-/*
-    Sets spotifyClientSecret
-    @param userspotifyClientSecret- new spotifyClientSecret
-*/
-void Spotify::setClientSecret(std::string userspotifyClientSecret) {
-    spotifyClientSecret = userspotifyClientSecret;
-}
-
-
 //Scopes
 
 /*
@@ -708,6 +738,20 @@ std::vector<std::string> Spotify::spotifyScopes() {
 }
 
 /*
+
+*/
+bool Spotify::isValidScopes(std::string scope) {
+    std::vector<std::string>scopes = spotifyScopes();
+    if (std::find(scopes.begin(), scopes.end(), scope) != scopes.end()) {
+        return true;
+    }
+    
+    return false;
+    
+}
+
+
+/*
     Validates inputted scopes.
     @param userScopes- scopes to validate(scopes must be seperated by a space)
 */
@@ -740,16 +784,12 @@ bool Spotify::validateScopes(std::string userScopes) {
 }
 
 /*
-    Trades refresh token for another OAuth2 token
+    Trades refresh token for another OAuth2 token. Upon the exchange- the API does not provide another refresh token
 */
 void Spotify::refreshToken() {
-    std::cout << "Trading code for OAuth2 token..." << std::endl;
-
     //Creating the POST data for the OAuth2 token request
-    std::string postData = "client_id=" + spotifyClientID
-        + "&grant_type=authorization_code"
-        + "&code=" + spotifyRefreshToken
-        + "&redirect_uri=https://www.google.com";
+    
+    std::string postData = "&grant_type=refresh_token&refresh_token=" + spotifyRefreshToken;
 
     //Creating the headers
     struct curl_slist* list = NULL;
@@ -761,21 +801,23 @@ void Spotify::refreshToken() {
 
     //Performs POST request and saves the resulting token JSON in readBuffer
     std::string readBuffer = utility::performCURLPOST("https://accounts.spotify.com/api/token", postData, list);
-
+    
     //std::cout << readBuffer << std::endl;
-
+    // 
     //Offset to the start of the access token code in readBuffer
     int first = 17;
 
     //Sets the class's Token as the readBuffer's access token
     spotifyAuthenticityToken = readBuffer.substr(first, readBuffer.find("token_type") - first - 3);
 
+    /*
     //Finds the first index of the refresh token
     //The '16' is the offset from the first index of readBuffer.find("refresh_token")
     int refreshFirst = readBuffer.find("refresh_token") + 16;
 
     //Sets the class's refresh token as the readBuffer's refresh token
-    spotifyRefreshToken = readBuffer.substr(refreshFirst, readBuffer.length() - refreshFirst - 2);
+    spotifyRefreshToken = readBuffer.substr(refreshFirst, readBuffer.find('"', refreshFirst) - refreshFirst);*/
+    spotifyRefreshToken = "";
 }
 
 //Utility

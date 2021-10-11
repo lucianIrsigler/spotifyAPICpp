@@ -98,36 +98,25 @@ public:
 	void addSongToUserQueue(std::string URI, std::string deviceID);
 
 
-	//Getters
-
-	std::string getToken();
-	std::string getClientID();
-	std::string getClientSecret();
-
-	//Setters
-
-	void setToken(std::string userToken);
-	void setClientID(std::string userspotifyClientID);
-	void setClientSecret(std::string userspotifyClientSecret);
-
 	//Scopes
 
 	std::vector<std::string> spotifyScopes();
+	bool isValidScopes(std::string scope);
 	bool validateScopes(std::string userScopes);
 
 	//Acquire another token
 
 	void refreshToken();
 
-
 	//utility
 	bool isLimitsAndOffsetInvalid(int limit, int offset);
+
+	std::string spotifyClassScopes;
 private:
 	std::string spotifyAuthenticityToken;
 	std::string spotifyClientID;
 	std::string spotifyClientSecret;
 	std::string spotifyRedirectURI;
 	std::string spotifyRefreshToken;
-	std::string spotifyClassScopes;
 };
 
