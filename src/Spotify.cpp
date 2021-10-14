@@ -305,74 +305,70 @@ std::string Spotify::getUserURI() {
 //Playlist
 
 /*
-
+    Searches for a user and returns their playlists.
+    Required scopes:playlist-read-private playlist-read-collaborative
+    @param userID->userID to search for
+    @param limit->number of playlists to return. Max is 50 and minimum 1
+    @param offset->How many playlists to skip initially
+    @returns User's playlist in JSON format
 */
 std::string Spotify::getSearchedUserPlaylists(std::string userID, int limit, int offset) {
     //https://developer.spotify.com/console/get-playlists/
-
-    if (spotifyClassScopes.find("playlist-read-private") == std::string::npos ||
-        spotifyClassScopes.find("playlist-read-collaborative") == std::string::npos) 
-    {
-        throw spotifyException("ERROR:'playlist-read-private' and 'playlist-read-collaborative' scope is required");
-    } 
+    //playlist-read-private playlist-read-collaborative
+   
     if (isLimitsAndOffsetInvalid(limit, offset)) {
         throw spotifyException("ERROR: Invalid limit/offset");
     }
     std::string url = "https://api.spotify.com/v1/users/" + userID + "/playlists?" + std::to_string(limit) + "&offset" + std::to_string(offset);
 
-    //Creates storage unit for necessary headers
-    struct curl_slist* list = NULL;
+    std::string readBuffer = utility::performCURLGET(url, spotifyAuthenticityToken);
 
-    //Appends the required headers
-    list = curl_slist_append(list, "Accept: application/json");
-    list = curl_slist_append(list, "Content-Type: application/json");
-    list = curl_slist_append(list, ("Authorization: Bearer " + spotifyAuthenticityToken).c_str());
-
-
-    std::string readBuffer = utility::performCURLGET(url, list);
-
-    if (readBuffer.find("\"status\" : 404,") != std::string::npos) {
-        throw spotifyException("ERROR:Invalid user ID");
+    try {
+        checkConditions(readBuffer);
+        return readBuffer;
     }
-
-    return readBuffer;
+    catch (const spotifyException& error) {
+        return error.what();
+    }
 }
 
 
 /*
-
-
+    Gets the user associated with the token's playlists
+    @param limit->number of playlists to get
+    @param offset->number of playlists to skip initially
+    @returns User's playlist in JSON format
 */
 std::string Spotify::getUserPlaylists(int limit, int offset){
     //https://developer.spotify.com/console/get-current-user-playlists/
 
-    if (spotifyClassScopes.find("playlist-read-private") == std::string::npos)
+    /*if (spotifyClassScopes.find("playlist-read-private") == std::string::npos)
     {
         throw spotifyException("ERROR:'playlist-read-private' scope is required");
-    }
+    }*/
 
     if (isLimitsAndOffsetInvalid(limit, offset)) {
         throw spotifyException("ERROR: Invalid limit/offset");
     }
 
-    //Used for headers
-    struct curl_slist* list = NULL;
-    
-    //Required headers
-    list = curl_slist_append(list, "Accept: application/json");
-    list = curl_slist_append(list, "Content-Type: application/json");
-    list = curl_slist_append(list, ("Authorization: Bearer " + spotifyAuthenticityToken).c_str());
-
     //Buffer to write to
-    std::string readBuffer = utility::performCURLGET("https://api.spotify.com/v1/me/playlists?" + std::to_string(limit), list);
+    std::string readBuffer = utility::performCURLGET("https://api.spotify.com/v1/me/playlists?" + std::to_string(limit), spotifyAuthenticityToken);
 
-    if (readBuffer.find("\"status\" : 404,") != std::string::npos) {
-        throw spotifyException("ERROR:Invalid user ID");
+    try {
+        checkConditions(readBuffer);
+        return readBuffer;
     }
-    return readBuffer;
+    catch (const spotifyException& error) {
+        return error.what();
+    }
 }
 
 /*
+    Gets a playlist
+    @param playlistID->playlistID to search for
+    @param market-> market to search for
+    @param fields->fields to search for
+    @returns Playlist info
 
 */
 std::string Spotify::getPlaylist(std::string playlistID, std::string market, std::string fields) {
@@ -383,58 +379,52 @@ std::string Spotify::getPlaylist(std::string playlistID, std::string market, std
         + "?market=" + market
         + "fields" + fields;
     
-    //Used for headers
-    struct curl_slist* list = NULL;
 
-    //Required headers
-    list = curl_slist_append(list, "Accept: application/json");
-    list = curl_slist_append(list, "Content-Type: application/json");
-    list = curl_slist_append(list, ("Authorization: Bearer " + spotifyAuthenticityToken).c_str());
+    std::string readBuffer = utility::performCURLGET(url, spotifyAuthenticityToken);
 
-    std::string readBuffer = utility::performCURLGET(url, list);
-
-    if (readBuffer.find("\"status\" : 404,") != std::string::npos) {
-        throw spotifyException("ERROR:Invalid user ID");
+    try {
+        checkConditions(readBuffer);
+        return readBuffer;
     }
-
-    return readBuffer;
+    catch (const spotifyException& error) {
+        return error.what();
+    }
 }
 
 /*
-
+    Retrieves the playlist display picture
+    @param playlistID->playlist to search for
+    @returns url of the playlist cover
 */
 std::string Spotify::getPlaylistCover(std::string playlistID) {
     //https://developer.spotify.com/console/get-playlist-images/
 
     std::string url = "https://api.spotify.com/v1/playlists/" + playlistID + "/images";
 
-    //Used for headers
-    struct curl_slist* list = NULL;
 
-    //Required headers
-    list = curl_slist_append(list, "Accept: application/json");
-    list = curl_slist_append(list, "Content-Type: application/json");
-    list = curl_slist_append(list, ("Authorization: Bearer " + spotifyAuthenticityToken).c_str());
+    std::string readBuffer = utility::performCURLGET(url, spotifyAuthenticityToken);
 
-    std::string readBuffer = utility::performCURLGET(url, list);
-
-    if (readBuffer.find("\"status\" : 404,") != std::string::npos) {
-        throw spotifyException("ERROR:not found");
+    try {
+        checkConditions(readBuffer);
+        return readBuffer;
     }
-
-    return readBuffer;
+    catch (const spotifyException& error) {
+        return error.what();
+    }
 }
 
 /*
-
+    Gets a playlist's songs.
+    Required scopes:playlist-read-private
+    @param playlistID->playlist to search for
+    @param market->market of songs to find
+    @param fields->fields to search for
+    @param limit->number of songs to search for. Max is 50
+    @param offset->How many playlists are skipped initially
+    @returns the playlist's items.
 */
-std::string Spotify::getPlaylistItems(std::string playlistID, std::string market, std::string fields, int limit=20, int offset=0) {
+std::string Spotify::getPlaylistItems(std::string playlistID, std::string market, std::string fields, int limit, int offset) {
     //https://developer.spotify.com/console/get-playlist-tracks/
-
-    if (spotifyClassScopes.find("playlist-read-private") == std::string::npos) 
-    {
-        throw spotifyException("ERROR:'playlist-read-private' scope is required");
-    }
 
     if (isLimitsAndOffsetInvalid(limit, offset)) {
         throw spotifyException("ERROR: Invalid limit/offset");
@@ -451,92 +441,183 @@ std::string Spotify::getPlaylistItems(std::string playlistID, std::string market
 
     url += "&limit=" + std::to_string(limit);
     url+="&offset=" + std::to_string(offset);
-    //Used for headers
-    struct curl_slist* list = NULL;
 
-    //Required headers
-    list = curl_slist_append(list, "Accept: application/json");
-    list = curl_slist_append(list, "Content-Type: application/json");
-    list = curl_slist_append(list, ("Authorization: Bearer " + spotifyAuthenticityToken).c_str());
+    std::string readBuffer = utility::performCURLGET(url, spotifyAuthenticityToken);
 
-    std::string readBuffer = utility::performCURLGET(url, list);
-
-    if (readBuffer.find("Invalid playlist Id") != std::string::npos) {
-        throw spotifyException("ERROR:Invalid playlist Id");
+    try {
+        checkConditions(readBuffer);
+        return readBuffer;
     }
-    else if (readBuffer.find("Invalid market code") != std::string::npos) {
-        throw spotifyException("ERROR:Invalid market code");
+    catch (const spotifyException& error) {
+        return error.what();
     }
-    else if (readBuffer.find("\"status\" : 404,") != std::string::npos) {
-        throw spotifyException("ERROR:not found");
-    }
-
-    return readBuffer;
 }
 
 /*
-
+    Creates a playlist.
+    Required scopes:playlist-modify-public playlist-modify-private
+    @param userID->User to create the playlist for
+    @param name-> name of playlist
+    @param description->Description of playlist
+    @param isPublic->The playlist's public status
 */
-void Spotify::createPlaylist(std::string userID, std::string requestBody) {
+void Spotify::createPlaylist(std::string userID, std::string name, std::string description, bool isPublic) {
     //https://developer.spotify.com/console/post-playlists/
 
-    if (spotifyClassScopes.find("playlist-modify-public") == std::string::npos ||
-        spotifyClassScopes.find("playlist-modify-private") == std::string::npos)
-    {
-        throw spotifyException("ERROR:'playlist-modify-private' and 'playlist-modify-public' scope is required");
+    //playlist-modify-public playlist-modify-private
+    if (name.length() == 0) {
+        throw spotifyException("Name too short");
+    }
+    std::string publicString;
+    isPublic ? publicString = "true" : publicString = "false";
+
+    std::vector<std::string>areas = {"name",name,"description",description,"public",publicString};
+
+    ///{0:1,2:3,4,5}
+    //{"name":"","description":"","public":true}
+    std::string temp = utility::convertToJSONString("{\"0\":\"1\",\"2\":\"3\",\"4\":5}", areas);
+
+    std::string JSONobject = utility::convertToJSONObject(temp);
+   
+    std::string readBuffer =utility::performCURLPOST("https://api.spotify.com/v1/users/" + userID + "/playlists", JSONobject, spotifyAuthenticityToken);
+    
+    try {
+        checkConditions(readBuffer);
+        std::cout << readBuffer << std::endl;
+    }
+    catch (const spotifyException& error) {
+        std::cout << error.what() << std::endl;
     }
 }
 
 /*
-
+    Adds a song to a playlist
+    Required scopes:playlist-modify-public playlist-modify-private
+    @param playlistID->playlist to search for
+    @param URI->song to add. Leave empty if you are adding via the vector
+    @param position->Position to add the songs into the Playlist
+    @param URIS->songs to add
 */
-void Spotify::addItemToPlaylist(std::string playlistID, int position, std::string URI, std::string requestBody) {
+void Spotify::addItemToPlaylist(std::string playlistID, std::string URI, int position, std::vector<std::string> URIS) {
     //https://developer.spotify.com/console/post-playlist-tracks/
 
-    if (spotifyClassScopes.find("playlist-modify-public") == std::string::npos ||
-        spotifyClassScopes.find("playlist-modify-private") == std::string::npos)
-    {
-        throw spotifyException("ERROR:'playlist-modify-private' and 'playlist-modify-public' scope is required");
+    //playlist-modify-public playlist-modify-private  
+
+    // {\"0\" : [\"1\",\"2\",\"3\"...\"n\"]}
+
+    URIS.insert(URIS.begin(), "uris");
+
+    std::string JSONQuery = "{\"0\" : [";
+    size_t counter = 1;
+
+    while (counter < URIS.size()-1) {
+        std::cout << counter << std::endl;
+        JSONQuery += "\""+std::to_string(counter)+"\",";
+        counter += 1;
     }
+
+    JSONQuery += "\"" + std::to_string(counter++) + "\"]}";
+
+
+    std::string temp = utility::convertToJSONString(std::move(JSONQuery), URIS);
+
+   
+    
+    /*std::string JSONString = "{\"uris\": [";
+
+    for (int i = 0; i < URIS.size(); i++) {
+        JSONString += "\"" + URIS[i] + "\",";
+    }
+    
+    JSONString += "\"" + URIS[URIS.size() - 1] + "\""+"]}";*/
+
+    std::string JSONobject = utility::convertToJSONObject(temp);
+
+
+    std::string postData = "position" + std::to_string(position);
+
+    if (URI != "") {
+        postData += "&uris=" + URI;
+    }
+
+    std::string url = "https://api.spotify.com/v1/playlists/" + playlistID + "/tracks?" + postData;
+
+    std::string readBuffer = utility::performCURLPOST(url, JSONobject, spotifyAuthenticityToken);
+    
+    std::cout << readBuffer << std::endl;
 }
 
 /*
-
+    Deletes a song to a playlist
+    Required scopes:playlist-modify-public playlist-modify-private
+    @param playlistID->playlist to search for
+    @param URIS->songs to delete
 */
-void Spotify::deleteItemFromPlaylist(std::string playlistID, std::string requestBody) {
+void Spotify::deleteItemFromPlaylist(std::string playlistID, std::vector<std::string> URIS) {
     //https://developer.spotify.com/console/delete-playlist-tracks/
 
-    if (spotifyClassScopes.find("playlist-modify-public") == std::string::npos ||
-        spotifyClassScopes.find("playlist-modify-private") == std::string::npos)
-    {
-        throw spotifyException("ERROR:'playlist-modify-private' and 'playlist-modify-public' scope is required");
+    //playlist-modify-public playlist-modify-private
+
+    std::string JSONString = "{ \"tracks\": [";
+
+    for (size_t i = 0; i < URIS.size() - 1; i++) {
+        JSONString += "{ \"uri\": \"" + URIS[i] + "\" },";
     }
-}
+
+    JSONString += "{ \"uri\": \"" + URIS[URIS.size()-1] + "\" }" + "] }";
+
+
+    std::string JSONobject = utility::convertToJSONObject(JSONString);
+
+    std::string url = "https://api.spotify.com/v1/playlists/" + playlistID + "/tracks";
+    std::string readBuffer = utility::performCURLPOST(url, JSONobject, spotifyAuthenticityToken);
+
+    std::cout << readBuffer << std::endl;
+    //{ "tracks": [{ "uri": "spotify:track:4iV5W9uYEdYUVa79Axb7Rh" },{ "uri": "spotify:track:1301WleyT98MSxVHPZCA6M" }] }
+}   
+    //{1:[{2:3},{2:3}]}
+
+//{"uris": ["spotify:track:4iV5W9uYEdYUVa79Axb7Rh","spotify:track:1301WleyT98MSxVHPZCA6M", "spotify:episode:512ojhOuo1ktJprKbVcKyQ"]}
+//{1:[2,3,4]}
 
 /*
-
+    Updates the playlist item
+    Required scopes:playlist-modify-public playlist-modify-private
+    @param playlistID->playlist to search for
+    @param URI->song to add. Leave empty if you are adding via the vector
+    @param position->Position to add the songs into the Playlist
+    @param URIS->songs to add
 */
 void Spotify::updatePlaylistItems(std::string playlistID, std::string URIs, std::string requestBody) {
     //https://developer.spotify.com/console/put-playlist-tracks/
 
-    if (spotifyClassScopes.find("playlist-modify-public") == std::string::npos ||
-        spotifyClassScopes.find("playlist-modify-private") == std::string::npos)
-    {
-        throw spotifyException("ERROR:'playlist-modify-private' and 'playlist-modify-public' scope is required");
-    }
+    //playlist-modify-public playlist-modify-private
+    
 }
 
 /*
-
+    x
+    Required scopes:playlist-modify-public playlist-modify-private
+    @param URIS->songs to add
 */
-void Spotify::changePlaylistDetails(std::string playlistID, std::string requestBody) {
+void Spotify::changePlaylistDetails(std::string playlistID, std::string name, std::string description, bool isPublic) {
     //https://developer.spotify.com/console/put-playlist/
+    if (name.length() == 0) {
+        throw spotifyException("Name too short");
 
-    if (spotifyClassScopes.find("playlist-modify-public") == std::string::npos ||
-        spotifyClassScopes.find("playlist-modify-private") == std::string::npos)
-    {
-        throw spotifyException("ERROR:'playlist-modify-private' and 'playlist-modify-public' scope is required");
     }
+    std::string publicString;
+    isPublic ? publicString = "true" : publicString = "false";
+
+    std::vector<std::string>areas = { "name",name,"description",description,"public", publicString };
+
+    std::string temp = utility::convertToJSONString("{\"0\":\"1\",\"2\":\"3\",\"4\":5}", areas);
+
+    std::string JSONobject = utility::convertToJSONObject(temp);
+    
+    std::string url = "https://api.spotify.com/v1/playlists/" + playlistID;
+
+    std::string readBuffer = utility::performCURLPUT(url, JSONobject, spotifyAuthenticityToken);
 }
 
 /*
