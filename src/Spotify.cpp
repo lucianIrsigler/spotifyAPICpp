@@ -997,3 +997,19 @@ void Spotify::refreshToken() {
 bool Spotify::isLimitsAndOffsetInvalid(int limit, int offset) {
     return !((1 <= limit && limit < 50) && (0 <= offset && offset < 10000));
 }
+
+/*
+    Checks if any error has occured
+    @returns spotifyException if error has occured
+*/
+void Spotify::checkConditions(std::string& request) {
+    std::vector<std::string>errors = { "The access token expired","Permissions missing","Invalid username",
+    "Invalid playlist Id","Invalid market code", "You cannot create a playlist for another user.", "Device not found"
+    };
+
+    for (auto x : errors) {
+        if (request.find(x) != std::string::npos){
+            throw spotifyException("error:"+ x);
+        }
+    }
+}
