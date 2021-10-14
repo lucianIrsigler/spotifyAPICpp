@@ -1,7 +1,15 @@
 #include "Spotify.h"
 
-//AUTH source -> https://developer.spotify.com/documentation/general/guides/authorization-guide/
+/**
+    Spotify.cpp
+    Purpose: Implementation of Spotify.h
 
+    @author Lucian Irsigler
+    @version 1.0 14/10/2021
+*/
+
+
+//AUTH source -> https://developer.spotify.com/documentation/general/guides/authorization-guide/
 /*
     Performs basic Authorization flow to acquire a Spotify OAuth2 token and refresh token.
     Should be used for long-running applications that require access only once.
@@ -40,6 +48,7 @@ void Spotify::basicauthorize(std::string scopes) {
     ShellExecute(0, 0, search, 0, 0, SW_SHOW);
 
     std::cout << "Click the Authorize button then copy paste the URL of the redirect:" << std::endl;
+  
 
     //Stores the URL in a variable
     std::string url;
@@ -70,7 +79,9 @@ void Spotify::basicauthorize(std::string scopes) {
     list = curl_slist_append(list, ("Authorization: Basic " + base64_encode(spotifyClientID + ":" + spotifyClientSecret)).c_str());
 
     //Performs POST request and saves the resulting token JSON in readBuffer
+
     std::string readBuffer=utility::performCURLPOST("https://accounts.spotify.com/api/token", postData, list);
+
     std::cout << "\n\n" << readBuffer << "\n\n" << std::endl;
     //std::cout << readBuffer << std::endl;
     
@@ -103,9 +114,10 @@ void Spotify::basicauthorize(std::string scopes) {
     Uses the PCKE authorising process to acquire an OAuth2 token and refresh token and store it in the class.
     Should be used if it is unsafe to store your client secret in the app.
 */
+/*
 void Spotify::authorizePCKE() {
 
-    srand(time(NULL)); // random number generator
+    srand(static_cast<unsigned int>time(NULL)); // random number generator
     std::string message;
     std::string codeChallenge;
     char c;
@@ -198,6 +210,7 @@ void Spotify::authorizePCKE() {
 
     }
 }
+*/
 
 /*
     Performs a cURL request for user data
