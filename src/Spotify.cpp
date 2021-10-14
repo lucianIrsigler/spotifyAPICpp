@@ -218,43 +218,17 @@ void Spotify::authorizePCKE() {
 */
 std::string Spotify::getUserInfo() {
     
-    //Creates storage unit for necessary headers
-    struct curl_slist* list = NULL;
-    
-    //Appends the required headers
-    list = curl_slist_append(list, "Accept: application/json");
-    list = curl_slist_append(list, "Content-Type: application/json");
-    list = curl_slist_append(list, ("Authorization: Bearer " + spotifyAuthenticityToken).c_str());
-
     //acquires user data and stores in variable readBuffer
-    std::string readBuffer = utility::performCURLGET("https://api.spotify.com/v1/me", list);
-
-    return readBuffer;
-
+    std::string readBuffer = utility::performCURLGET("https://api.spotify.com/v1/me", spotifyAuthenticityToken);
+    
+    try{
+        checkConditions(readBuffer);
+        return readBuffer;
+    }
+    catch (const spotifyException& error) {
+        return error.what();
+    }
 }
-
-/*
- USER INFO
-{
-  "display_name" : "Roxx",
-  "external_urls" : {
-    "spotify" : "https://open.spotify.com/user/ki09vo7tt3rwgyrsma9lhjo4c"
-  },
-  "followers" : {
-    "href" : null,
-    "total" : 5
-  },
-  "href" : "https://api.spotify.com/v1/users/ki09vo7tt3rwgyrsma9lhjo4c",
-  "id" : "ki09vo7tt3rwgyrsma9lhjo4c",
-  "images" : [ {
-    "height" : null,
-    "url" : "https://i.scdn.co/image/ab6775700000ee855e3d7a922066af0672ddaf12",
-    "width" : null
-  } ],
-  "type" : "user",
-  "uri" : "spotify:user:ki09vo7tt3rwgyrsma9lhjo4c"
-}
-*/
 
 /*
     Performs a cURL request for the user's display name
@@ -262,6 +236,7 @@ std::string Spotify::getUserInfo() {
 */
 std::string Spotify::getDisplayName(){
     std::string userInfo =getUserInfo();
+    std::cout << userInfo << std::endl;
     return userInfo.substr(22,userInfo.find('"',22)-22);
 }
 
