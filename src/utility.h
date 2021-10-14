@@ -10,8 +10,12 @@
 #include <string>
 #include <iostream>
 #include <curl/curl.h>
+#include <vector>
+#include "json/json.h"
 
 namespace utility{
+
+    /**/
     static std::string generateRandomText(int length) {
         char c;
         std::string message;
@@ -111,6 +115,101 @@ namespace utility{
         else {
             return "ERROR: curl failed";
         }
+    }
+
+    /**/
+    static std::string performCURLPUT(std::string website, std::string POSTdata, std::string token) {
+        CURL* curl;
+        CURLcode res;
+
+        //Used for headers
+        struct curl_slist* list = NULL;
+
+        //Required headers
+        list = curl_slist_append(list, "Accept: application/json");
+        list = curl_slist_append(list, "Content-Type: application/json");
+        list = curl_slist_append(list, ("Authorization: Bearer " + token).c_str());
+
+        std::string readBuffer;
+        curl_global_init(CURL_GLOBAL_ALL);
+
+        curl = curl_easy_init();
+
+        if (curl) {
+            curl_easy_setopt(curl, CURLOPT_URL, website.c_str());
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, POSTdata.c_str());
+            curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
+            curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+
+            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+
+            res = curl_easy_perform(curl);
+
+            if (res != CURLE_OK) {
+                fprintf(stderr, "curl_easy_perform() failed: %s\n",
+                    curl_easy_strerror(res));
+                return "ERROR: HTTP POST request failed";
+            }
+            curl_easy_cleanup(curl);
+
+            curl_global_cleanup();
+
+            return readBuffer;
+        }
+        else {
+            return "ERROR: curl failed";
+        }
+    }
+
+    /*
+    */
+    static std::string convertToJSONString(std::string&& jsonFormat, std::vector<std::string>& values) {
+        //{1:[2,3,4]}
+        //{1:[{2:3},{2:3}]}
+        std::string temp = "";
+
+        for (size_t i = 0; i < jsonFormat.length(); i++) {
+            if (std::isdigit(jsonFormat[i])) {
+                int x = std::stoi(std::string(1,jsonFormat[i]));
+                temp += values[x];
+            }
+            else {
+                temp += jsonFormat[i];
+            }
+
+        }
+        return temp;
+    }
+
+    /**/
+    static std::string convertToJSONObject(std::string value) {
+
+        Json::CharReaderBuilder builder;
+        Json::CharReader* reader = builder.newCharReader();
+
+        Json::Value root;
+        std::string errors;
+
+        bool parsingSuccessful = reader->parse(value.c_str(), value.c_str() + value.size(), &root, &errors);
+        delete reader;
+
+        if (!parsingSuccessful)
+        {
+            std::cout << value << std::endl;
+            std::cout <<"ERRORS:"<< errors << std::endl;
+        }
+
+        for (Json::Value::const_iterator outer = root.begin(); outer != root.end(); outer++)
+        {
+            for (Json::Value::const_iterator inner = (*outer).begin(); inner != (*outer).end(); inner++)
+            {
+                //std::cout << inner.key() << ": " << *inner << std::endl;
+                ;
+            }
+        }
+
+        return value;
     }
 
 };
