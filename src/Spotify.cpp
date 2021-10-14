@@ -630,42 +630,33 @@ void Spotify::changePlaylistDetails(std::string playlistID, std::string name, st
 
 */
 std::string Spotify:: getUserRecentPlaying(int limit) {
-    if (spotifyClassScopes.find("user-read-recently-played") == std::string::npos) {
-        throw spotifyException("ERROR:'user-read-recently-played' scope is required");
-    }
-
-    //Creates storage unit for necessary headers
-    struct curl_slist* list = NULL;
-
-    //Appends the required headers
-    list = curl_slist_append(list, "Accept: application/json");
-    list = curl_slist_append(list, "Content-Type: application/json");
-    list = curl_slist_append(list, ("Authorization: Bearer " + spotifyAuthenticityToken).c_str());
+    //https://developer.spotify.com/console/get-recently-played/
+    
+    //user-read-recently-played
 
     //acquires user data and stores in variable readBuffer
-    std::string readBuffer = utility::performCURLGET("https://api.spotify.com/v1/me/player/recently-played", list);
-
-    return readBuffer;
+    std::string readBuffer = utility::performCURLGET("https://api.spotify.com/v1/me/player/recently-played", spotifyAuthenticityToken);
+    std::cout << readBuffer << std::endl;
+    try {
+        checkConditions(readBuffer);
+        return readBuffer;
+    }
+    catch (const spotifyException& error) {
+        return error.what();
+    }
 }
 
 /*
 
 */
 std::string Spotify:: getUserPlaybackState() {
-    if (spotifyClassScopes.find("user-read-playback-state") == std::string::npos) {
-        throw spotifyException("ERROR:'user-read-playback-state' scope is required");
-    }
+    //https://developer.spotify.com/console/get-user-player/
+    // 
+    //user-read-playback-state
 
-    //Creates storage unit for necessary headers
-    struct curl_slist* list = NULL;
-
-    //Appends the required headers
-    list = curl_slist_append(list, "Accept: application/json");
-    list = curl_slist_append(list, "Content-Type: application/json");
-    list = curl_slist_append(list, ("Authorization: Bearer " + spotifyAuthenticityToken).c_str());
 
     //acquires user data and stores in variable readBuffer
-    std::string readBuffer = utility::performCURLGET("https://api.spotify.com/v1/me/player/recently-played", list);
+    std::string readBuffer = utility::performCURLGET("https://api.spotify.com/v1/me/player/recently-played", spotifyAuthenticityToken);
 
     return readBuffer;
 }
@@ -681,29 +672,31 @@ void Spotify::transferUserPlayback() {
 
 */
 std::string Spotify::getAvialableDevices() {
-    return "";
+    //https://developer.spotify.com/console/get-users-available-devices/
+    //user-read-playback-state
+
+    std::string readBuffer = utility::performCURLGET("https://api.spotify.com/v1/me/player/devices", spotifyAuthenticityToken);
+
+
+    return readBuffer;
 }
 
 /*
 
 */
 std::string Spotify::getUserCurrentPlaying(){
-    if (spotifyClassScopes.find("user-read-currently-playing") == std::string::npos) {
-        return "ERROR:'user-read-currently-playing' scope is required";
-    }
-
-    //Creates storage unit for necessary headers
-    struct curl_slist* list = NULL;
-
-    //Appends the required headers
-    list = curl_slist_append(list, "Accept: application/json");
-    list = curl_slist_append(list, "Content-Type: application/json");
-    list = curl_slist_append(list, ("Authorization: Bearer " + spotifyAuthenticityToken).c_str());
-
+    //user-read-currently-playing
+    // 
     //acquires user data and stores in variable readBuffer
-    std::string readBuffer = utility::performCURLGET("https://api.spotify.com/v1/me/player/currently-playing", list);
+    std::string readBuffer = utility::performCURLGET("https://api.spotify.com/v1/me/player/currently-playing", spotifyAuthenticityToken);
 
-    return readBuffer;
+    try {
+        checkConditions(readBuffer);
+        return readBuffer;
+    }
+    catch (const spotifyException& error) {
+        return error.what();
+    }
 
 }
 
@@ -711,28 +704,64 @@ std::string Spotify::getUserCurrentPlaying(){
 
 */
 void Spotify::resumeUserPlayback(){
+    //https://developer.spotify.com/console/put-play/
+
 
 }
 
 /*
 
 */
-void Spotify::pauseUserPlayback(){
+void Spotify::pauseUserPlayback(std::string deviceID){
+    //https://developer.spotify.com/console/put-pause/
+
+    //user-modify-playback-state
+
+    std::string readBuffer = utility::performCURLPUT("https://api.spotify.com/v1/me/player/pause", "", spotifyAuthenticityToken);
+    
+    try {
+        checkConditions(readBuffer);
+    }
+    catch (const spotifyException& error) {
+        std::cout<<error.what()<<std::endl;
+    }
+}
+
+/*
+
+*/
+void Spotify::skipToNextTrack(std::string deviceID){
+    //https://developer.spotify.com/console/post-next/
+
+    //user-modify-playback-state
+
+    std::string readBuffer = utility::performCURLPOST("https://api.spotify.com/v1/me/player/next", "", spotifyAuthenticityToken);
+
+    try {
+        checkConditions(readBuffer);
+    }
+    catch (const spotifyException& error) {
+        std::cout << error.what() << std::endl;
+    }
 
 }
 
 /*
 
 */
-void Spotify::skipToNextTrack(){
+void Spotify::skipToPreviousTrack(std::string deviceID){
+    //https://developer.spotify.com/console/post-previous/
 
-}
+    //user-modify-playback-state
+    
+    std::string readBuffer = utility::performCURLPOST("https://api.spotify.com/v1/me/player/previous", "", spotifyAuthenticityToken);
 
-/*
-
-*/
-void Spotify::skipToPreviousTrack(){
-
+    try {
+        checkConditions(readBuffer);
+    }
+    catch (const spotifyException& error) {
+        std::cout << error.what() << std::endl;
+    }
 }
 
 /*
@@ -745,21 +774,87 @@ void Spotify::seekToPositionCurrentTrack(){
 /*
 
 */
-void Spotify::setRepeatOnPlayback(){
+void Spotify::setRepeatOnPlayback(std::string state, std::string deviceID){
+    //https://developer.spotify.com/console/put-repeat/
 
+    /*track will repeat the current track.
+    context will repeat the current context.
+    off will turn repeat off.*/
+
+    if (state == "track" || state == "context" || state == "off") {
+        std::string url = "https://api.spotify.com/v1/me/player/repeat?state=" + state;
+
+        if (deviceID != "") {
+            url+="&device_id" + deviceID;
+        }
+
+        std::string readBuffer = utility::performCURLPUT(url, "", spotifyAuthenticityToken);
+        std::cout << readBuffer << std::endl;
+        try {
+            checkConditions(readBuffer);
+        }
+        catch (const spotifyException& error) {
+            std::cout << error.what() << std::endl;
+        }
+    }
+    else {
+        throw spotifyException("Invalid state");
+    }
 }
 
 /*
 
 */
-void Spotify::setVolumeOnPlayback(){
+void Spotify::setVolumeOnPlayback(int volume,std::string deviceID){
+    //https://developer.spotify.com/console/put-volume/
 
+    if ((0 > volume) || (volume > 100)) {
+        throw spotifyException("Invalid volume.");
+    }
+
+    //user-modify-playback-state
+
+
+    std::string url = "https://api.spotify.com/v1/me/player/volume?volume_percent" + std::to_string(volume) + "&device_id=" + deviceID;
+
+    std::string readBuffer = utility::performCURLPUT(url, "", spotifyAuthenticityToken);
+
+    try {
+        checkConditions(readBuffer);
+    }
+    catch (const spotifyException& error) {
+        std::cout << error.what() << std::endl;
+    }
 }
 
 /*
 
 */
-void Spotify::toggleShuffleOnPlayback(){
+void Spotify::toggleShuffleOnPlayback(bool shuffle, std::string deviceID){
+    // https://developer.spotify.com/console/put-shuffle/
+
+    /*
+    true- shuffle
+    false- does not shuffle
+    */
+
+    //user-modify-playback-state
+
+
+    std::string state;
+
+    shuffle ? state = "true" : state = "false";
+
+    std::string url = "https://api.spotify.com/v1/me/player/shuffle?state=" + state + "&&device_id=" + deviceID;
+
+    std::string readBuffer = utility::performCURLPUT(url, "", spotifyAuthenticityToken);
+    std::cout << readBuffer << std::endl;
+    try {
+        checkConditions(readBuffer);
+    }
+    catch (const spotifyException& error) {
+        std::cout << error.what() << std::endl;
+    }
 
 }
 
