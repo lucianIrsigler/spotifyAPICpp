@@ -1,112 +1,138 @@
-/**
-    test.h
-    Purpose: Provides test functions for spotify class functions
-
-    @author Lucian Irsigler
-    @version 1.1 14/10/2021
-*/
-
 #pragma once
-#include <iostream>
-#include "Spotify.h"
-#include <assert.h>
 
+#include "spotifylogging.h"
+#include "spotifyPlaylist.h"
+#include "spotifyTracks.h"
 
-void basicAuthorize(Spotify& instance, std::string scopes) {
-    try {
-        instance.basicauthorize(scopes);
-    }
-    catch (const spotifyException& error) {
-        std::cout << error.what() << std::endl;
-        return;
-    }
-}
+namespace testing {
+	namespace logging {
+		void testA() {
+			spotifyLogToFile("");
+			spotifyLogToFile("THIS IS A MESSAGE");
+			spotifyLogToFile(std::to_string(-1));
+			spotifyLogToFile("THIs\n\n\nis\n\n\ta\n\nmessage ok");
+		}
+	}
 
-void testUser(Spotify& instance) {
-    instance.basicauthorize("");
+	namespace playlist {
+		spotifyPlaylist test= spotifyPlaylist("",
+			"",
+			"",
+			"https://www.google.com");
 
-    std::cout << instance.getUserInfo() << std::endl;
-    std::cout << "Username:" << instance.getDisplayName() << std::endl;
-    std::cout << "User URL:" << instance.getUserURL() << std::endl;
-    std::cout << "User Followers:" << instance.getUserFollowers() << std::endl;
-    std::cout << "User ID:" << instance.getUserID() << std::endl;
-    std::cout << "User Profile picture URL:" << instance.getUserProfilePictureURL() << std::endl;
-    std::cout << "User Type:" << instance.getUserType() << std::endl;
-    std::cout << "User URI:" << instance.getUserURI() << std::endl;
-}
+		
 
-void testPlayer(Spotify& instance) {
-    std::cout << instance.getUserCurrentPlaying() << std::endl;
-}
+		void testA() {
+			std::cout << "\n\nTESTA\n\n";
+			std::string scopes = "playlist-read-private playlist-read-collaborative";
 
-void testPlaylist(Spotify& instance) {
+			test.basicauthorize(scopes);
 
-    //Test to create playlist
-    try {
-        instance.createPlaylist(instance.getUserID(), "TEST2", "", true);
-    }
-    catch (const spotifyException& error) {
-        std::cout << error.what() << std::endl;
-    }
+			std::cout<<test.getSearchedUserPlaylists("ki09vo7tt3rwgyrsma9lhjo4c")<<std::endl;
+			std::cout << test.getSearchedUserPlaylists("ki09vo7tt3rwgc") << std::endl;
+			std::cout << test.getSearchedUserPlaylists("ki09vo7tt3rwgyrsma9lhjo4c",10,0) << std::endl;
+			std::cout << test.getSearchedUserPlaylists("ki09vo7tt3rwgyrsma9lhjo4c",100,0) << std::endl;
+			std::cout << test.getSearchedUserPlaylists("ki09vo7tt3rwgyrsma9lhjo4c",-1,2) << std::endl;
+			std::cout << test.getSearchedUserPlaylists("ki09vo7tt3rwg9lhjo4c",10,0) << std::endl;
+		}
 
-    //Test to get playlist items
-    try {
-        std::cout << instance.getPlaylistItems("7hmCqxCjbXqBWnjQ6HNjch", "", "", 10, 0);
-    }
-    catch (const spotifyException& error) {
-        std::cout << error.what() << std::endl;
-    }
+		void testB() {
+			std::cout << "\n\nTESTB\n\n";
+			std::string scopes = "playlist-read-private";
+			test.basicauthorize(scopes);
 
-    //Test to add items to playlist/delete from playlist
-    std::vector<std::string>tracks = { "spotify:track:1BIENruTnjKdB7HD2YIlRr","spotify:track:2VOomzT6VavJOGBeySqaMc" };
-    try {
-        instance.addItemToPlaylist("1jWc7Y22userB4guI2rD38", "", 0, tracks);
-    }
-    catch (const spotifyException& error) {
-        std::cout << error.what() << std::endl;
-        return;
-    }
+			std::cout << test.getUserPlaylists() << std::endl;
+			std::cout << "\n";
+			std::cout << test.getUserPlaylists(20,1) << std::endl;
+			std::cout << "\n";
+			std::cout << test.getUserPlaylists(51,0) << std::endl;
+			std::cout << "\n";
+			std::cout << test.getUserPlaylists(-1,0) << std::endl;
+			std::cout << "\n";
+			std::cout << test.getUserPlaylists(20,-10) << std::endl;
+		}
 
-    try {
-        instance.deleteItemFromPlaylist("1jWc7Y22userB4guI2rD38", tracks);
-    }
-    catch (const spotifyException& error) {
-        std::cout << error.what() << std::endl;
-        return;
-    }
-}
+		void testC() {
+			std::cout << "\n\nTESTC\n\n";
+			std::string scopes = "playlist-read-private";
+			test.basicauthorize(scopes);
 
+			std::cout<<test.getPlaylist("0hP5KYEs9K99jMNgBS3IOi","","")<<std::endl;
+			std::cout<<test.getPlaylist("0hP5KYEs9K99jMNg","","")<<std::endl;
+			std::cout<< test.getPlaylist("0hP5KYEs9K99jMNgBS3IOi","DSDS","") << std::endl;
+			std::cout<< test.getPlaylist("dasdsad","ES","") << std::endl;
+		}
 
-void testJson() {
-    //{1:[2,3,4]}
-    //{1:[{2:3},{2:3}]}
-    std::vector<std::string>values = { "test1","test2","test3","test4","test5","test6","test7" };
+		void testD() {
+			std::cout << "\n\nTESTD\n\n";
+			std::string scopes = "playlist-read-private";
+			test.basicauthorize(scopes);
 
+			std::cout << test.getPlaylistCover("0hP5KYEs9K99jMNgBS3IOi") << std::endl;
+			std::cout << test.getPlaylistCover("0hP5KYEs9K99jM") << std::endl;
+		}
 
-    std::string result0 = utility::convertToJSONString("{0:[1,2,3]}", values);
-    assert(result0 == "{test1:[test2,test3,test4]}");
+		void testE(){
+			std::cout << test.getPlaylistItems("0hP5KYEs9K99jMNgBS3IOi","","") << std::endl;
+			std::cout << test.getPlaylistItems("0hP5KYEs9K99jM","","") << std::endl;
+			std::cout << test.getPlaylistItems("0hP5KYEs9K99jMNgBS3IOi","dsds","") << std::endl;
+			std::cout << test.getPlaylistItems("0hP5KYEs9K99jMNgBS3IOi","","dasdas") << std::endl;
+			std::cout << test.getPlaylistItems("0hP5KYEs9K99jMNgBS3IOi","","",20,0) << std::endl;
+			std::cout << test.getPlaylistItems("0hP5KYEs9K99jMNgBS3IOi","","",51,1) << std::endl;
+			std::cout << test.getPlaylistItems("0hP5KYEs9K99jMNgBS3IOi","","",-1,0) << std::endl;
+		}
 
-    std::string result1 = utility::convertToJSONString("{0:[1:2],3}", values);
+		void fullTest() {
+			testA();
+			testB();
+			testC();
+			testD();
+			testE();
+		}
+	}
 
-    assert(result1 == "{test1:[test2:test3],test4}");
+	namespace track{
+		std::string tracks = "36fwOQjsEFesQvfEybK2Ei,59nbIJxGb1qkrzbtTomZkL,5OCJzvD7sykQEKHH7qAC3C,0YammaEkYSeo9vQYZ1OwS6,6c1QaQHdDhtFMfUkhueuXK,4e5WTCvy6Z8hkUY1IP29b0,4qULqxfCRhJAXVc75UupQB,4EpNQjLsdhjO1EGQ1aycTU,7HOYkw4m0lSDxcramohtPl,6LoQHIo74tOzQ8EsLEkhgF";
 
-    std::string result2 = utility::convertToJSONString("{0:[[1:2],3]}", values);
-    assert(result2 == "{test1:[[test2:test3],test4]}");
+		spotifyTracks test = spotifyTracks("",
+			"",
+			"",
+			"https://www.google.com");
+		
+		void testA() {
+			test.basicauthorize();
+			//std::cout <<test.getTrackAudioAnalysis("015jLlgBeSkl3CApWJhlv7") << std::endl;
+			std::cout << test.getTrackAudioAnalysis("dsdsdsd") << std::endl;
+			//std::cout << test.getTrackAudioAnalysis("") << std::endl;
+		}
 
-    std::string result3 = utility::convertToJSONString("{0:{1:2,1:3,1:4}}", values);
-    assert(result3 == "{test1:{test2:test3,test2:test4,test2:test5}}");
+		void testB() {
+			test.basicauthorize();
+			std::cout<<test.getTrack("","015jLlgBeSkl3CApWJhlv7");
+			std::cout << test.getTrack("ESnDF","015jLlgBeSkl3CApWJhlv7");
+			std::cout << test.getTrack("","015jLlgBeSkl3CApW");
+			std::cout << test.getTrack("DSSD","015jLlgBeSkl3CApW");
+		}
 
-    std::cout << "END" << std::endl;
+		void testC() {
+			test.basicauthorize();
+			std::cout << test.getTrackAudioFeatures("015jLlgBeSkl3CApWJhlv7") << std::endl;
+			std::cout << test.getTrackAudioFeatures("dsdsdsd") << std::endl;
+			std::cout << test.getTrackAudioFeatures("") << std::endl;
+		}
 
-}
+		void testD() {
+			test.basicauthorize();
+			std::cout << test.getTracks("", tracks) << std::endl;
+			std::cout << test.getTracks("", "") << std::endl;
+			std::cout << test.getTracks("", "DSDASDAS,dsdasdas,gfggf,trtr,dasdas,5454sdsds") << std::endl;
+		}
 
-void testTextGeneration() {
-    for (int i = 0; i < 100; i++) {
-        std::cout << utility::generateRandomText(15) << std::endl;
-    }
-}
-
-void breakPlaylist(Spotify& instance) {
-    instance.createPlaylist(instance.getUserID(), "d", "", true);
-
+		void testE() {
+			test.basicauthorize();
+			std::cout << test.getTracksAudioAnalysis(tracks) << std::endl;
+			std::cout << test.getTracksAudioAnalysis("DSDASASDAS,gfgfgf,66565,dsdas,Sdetujfdf") << std::endl;
+			std::cout << test.getTracksAudioAnalysis("") << std::endl;
+		}
+	}
 }
