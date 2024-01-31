@@ -42,6 +42,9 @@ The wrapper can automatically reacquire another token when the following trigger
 2) An API call is made to an API endpoint that requires no endpoint, such as https://api.spotify.com/v1/me
 3) The length of the token must be correct/be atleast a minimum length.
 
+# Design philosophy 
+The project uses inheritance and derived classes.
+
 # Dependencies
 This project depends on the [cURL](https://github.com/curl/curl) library and the [jsonCPP](https://github.com/open-source-parsers/jsoncpp) library.
 
