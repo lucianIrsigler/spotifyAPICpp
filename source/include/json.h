@@ -1,7 +1,9 @@
 #pragma once
 
-#include "json/json.h"
 #include <string>
+#include "logging.h"
+#include "json/json.h"
+#include <vector>
 
 namespace json
 {
@@ -14,7 +16,7 @@ namespace json
     static std::string convertToJSONString(std::string jsonFormat, std::vector<std::string>& values) {
         //{1:[2,3,4]}
         //{1:[{2:3},{2:3}]}
-        std::string temp = "";    
+        std::string temp = "";
 
         for (size_t i = 0; i < jsonFormat.length(); i++) {
             if (std::isdigit(jsonFormat[i])) {
@@ -48,19 +50,9 @@ namespace json
 
         if (!parsingSuccessful)
         {
-            std::cout << value << std::endl;
-            std::cout << "ERRORS:" << errors << std::endl;
+            spotifyLogToFile("ERRORS:" + errors);
+            return "";
         }
-
-        //for (Json::Value::const_iterator outer = root.begin(); outer != root.end(); outer++)
-        //{
-        //    for (Json::Value::const_iterator inner = (*outer).begin(); inner != (*outer).end(); inner++)
-        //    {
-        //        //std::cout << inner.key() << ": " << *inner << std::endl;
-        //        ;
-        //    }
-        //}
-
         return value;
     }
 

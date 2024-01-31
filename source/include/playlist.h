@@ -1,15 +1,13 @@
 #pragma once
-#include "base.h"
-#include "json.h"
-#include "spotifyPlaylistObject.h"
+#include <string>
+#include "spotifyBase.h"
 
-class spotifyPlaylist :public base
+class spotifyPlaylist :public SpotifyBase
 {
 public:
 	spotifyPlaylist();
 	spotifyPlaylist(
 		std::string authToken, std::string userspotifyClientID, std::string userClientSecret, std::string userRedirect);
-	spotifyPlaylist(spotifyClientInfo* clientInformation);
 
 	//GET
 
@@ -32,7 +30,7 @@ public:
 	std::string getUserPlaylists(int limit = 20, int offset = 0);
 
 	/**/
-	std::vector<spotifyPlaylistObject> getUserPlaylistsObjects();
+	//std::vector<spotifyPlaylistObject> getUserPlaylistsObjects();
 
 	/*
 		Gets a playlist.Scopes:NONE
@@ -66,7 +64,7 @@ public:
 	//POST
 
 	/*
-		Creates a playlist.Scopes:playlist-modify-publicplaylist-modify-private
+		Creates a playlist.
 		Required scopes:playlist-modify-public playlist-modify-private
 		@param userID->User to create the playlist for
 		@param name-> name of playlist
@@ -105,7 +103,7 @@ public:
 	void updatePlaylistItems(std::string playlistID, std::string URIs, std::string requestBody);
 
 	/*
-		Changes a playlist's details.Scopes:playlist-modify-public playlist-modify-private
+		Changes a playlist's details.
 		Scopes:playlist-modify-public playlist-modify-private
 		@param playlistID->ID of playlist to edit
 		@param name-> new name to give the playlist
@@ -113,7 +111,4 @@ public:
 		@param isPublic->Change whether the playlist can be displayed on the user's profile
 	*/
 	void changePlaylistDetails(std::string playlistID, std::string name, std::string description, bool isPublic = true);
-
-private:
-	std::string findTerm(std::string term, std::string text, int offsetFromEndOfSearch, int startIndex, std::string charToEnd);
 };

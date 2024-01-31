@@ -9,43 +9,53 @@
 #pragma once
 #include <string>
 
-/*
-Checks if the limit and offset are invalid.
-Limit must be within the range of [1,50).
-Offset must be within the range of [0,10000).
-Inverse of conjunction is returned- as if both statements are true- then the function returns false
+namespace {
+    /*
+        Checks if the limit and offset are invalid.
+        @param limit - limit must be within the range of [1,50).
+        @param offset - Offset must be within the range of [0,10000).
+        @returns true if both limit and offset are invalid, else false
+    */
+    bool isLimitsAndOffsetInvalid(int limit, int offset) {
+        bool isWithinLimit = (1 <= limit && limit < 50);
+        bool isWithinAllowedOffset = (0 <= offset && offset < 10000);
 
-@returns the inverse of the truth Conjunction of the two statements.
-*/
-static bool isLimitsAndOffsetInvalid(int limit, int offset) {
-    bool isWithinLimit = (1 <= limit && limit < 50);
-    bool isWithinAllowedOffset = (0 <= offset && offset < 10000);
-
-    return !(isWithinLimit && isWithinAllowedOffset);
-}
-
-/*
-    Generates a random text of n length
-    @param length->length of text to generate
-    @returns random text
-*/
-static std::string generateRandomText(int length) {
-    char c;
-    std::string message;
-
-    for (uint8_t i = 0; i < length; i++) {
-        uint8_t selection = rand() % 2;
-        uint8_t random = rand() % 26;
-
-        if (selection == 0) {
-            c = 'a' + random;
-        }
-        else {
-            c = 'A' + random;
-        }
-
-        message += c;
+        return !(isWithinLimit && isWithinAllowedOffset);
     }
 
-    return message;
+    /*
+        Generates a random text of n length
+        @param length->length of text to generate
+        @returns random text
+    */
+    std::string generateRandomText(int length) {
+        char c;
+        std::string message;
+
+        for (int i = 0; i < length; i++) {
+            int selection = rand() % 2;
+            int random = rand() % 26;
+
+            (selection == 0) ? c = 'a' + random : c = 'A' + random;
+
+            message += c;
+        }
+
+        return message;
+    }
+
+
+    /*
+        For example:
+            https://open.spotify.com/album/7Ixqxq13tWhrbnIabk3172?si=HyKwuofFR26gYWgDcHBemA
+            https://open.spotify.com/track/1rDgAHDX95RmylxjgVW9tN?si=849439ed564142b6
+            https://open.spotify.com/artist/6mEQK9m2krja6X1cfsAjfl?si=786f53cf49184e34
+
+        This function will retrieive the 7Ixqxq13tWhrbnIabk3172,1rDgAHDX95RmylxjgVW9tN,6mEQK9m2krja6X1cfsAjfl
+    */
+    std::string getIDFromURL(std::string url) {
+        int firstIndex = url.find_last_of('/');
+        int secondIndex = url.find("?si");
+        return url.substr(firstIndex+1, secondIndex - firstIndex-1);
+    }
 }

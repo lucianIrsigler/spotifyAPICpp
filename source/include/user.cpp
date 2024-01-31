@@ -1,16 +1,14 @@
-#include "spotifyUser.h"
-
-spotifyUser::spotifyUser() :base()
+#include "pch.h"
+#include "user.h"
+spotifyUser::spotifyUser() :SpotifyBase()
 {};
 
 spotifyUser::spotifyUser(
     std::string authToken, std::string userspotifyClientID, std::string userClientSecret, std::string userRedirect) :
-    base(authToken, userspotifyClientID, userClientSecret, userRedirect)
+    SpotifyBase(authToken, userspotifyClientID, userClientSecret, userRedirect)
 {  };
 
-spotifyUser::spotifyUser(spotifyClientInfo* clientInformation) :
-    base(clientInformation)
-{};
+
 
 std::string spotifyUser::getUserInfo() {
 
@@ -18,12 +16,11 @@ std::string spotifyUser::getUserInfo() {
     std::string readBuffer = performCURLGET("https://api.spotify.com/v1/me", authenticityToken);
 
     //checks readBuffer and returns right value
-    return errorChecking(readBuffer,  __func__);
+    return errorChecking(readBuffer, __func__);
 }
 
 std::string spotifyUser::getDisplayName() {
     std::string userInfo = getUserInfo();
-    std::cout << userInfo << std::endl;
     return userInfo.substr(22, userInfo.find('"', 22) - 22);
 }
 
@@ -80,10 +77,12 @@ std::string spotifyUser::getUserTopItems(std::string type, std::string time_rang
     if (isLimitsAndOffsetInvalid(limit, offset)) {
         spotifyLogToFile(std::string(__func__) + "->Invalid limit/offset.\nLimit:" + std::to_string(limit) + "\nOffset: " + std::to_string(offset));
         return "invalid limit/offset";
-    }else if (validTypes.find(type) == std::string::npos) {
+    }
+    else if (validTypes.find(type) == std::string::npos) {
         spotifyLogToFile(std::string(__func__) + "->Invalid type\ntype:" + type);
         return "invalid type";
-    }else if (timeRanges.find(time_range) == std::string::npos) {
+    }
+    else if (timeRanges.find(time_range) == std::string::npos) {
         spotifyLogToFile(std::string(__func__) + "->Invalid time_range\ntime_range:" + time_range);
         return "invalid time_range";
     }
@@ -96,5 +95,5 @@ std::string spotifyUser::getUserTopItems(std::string type, std::string time_rang
 
     std::string readBuffer = performCURLGET(url, authenticityToken);
 
-    return errorChecking(readBuffer,  __func__);
+    return errorChecking(readBuffer, __func__);
 }

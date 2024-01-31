@@ -1,24 +1,18 @@
-#include "spotifyTracks.h"
+#include "pch.h"
+#include "tracks.h"
 
-spotifyTracks::spotifyTracks() :base()
+spotifyTracks::spotifyTracks() :SpotifyBase()
 {
-	
+
 };
 
 spotifyTracks::spotifyTracks(
 	std::string authToken, std::string userspotifyClientID, std::string userClientSecret, std::string userRedirect) :
-	base(authToken, userspotifyClientID, userClientSecret, userRedirect)
+	SpotifyBase(authToken, userspotifyClientID, userClientSecret, userRedirect)
 {
-	
-	
 };
 
-spotifyTracks::spotifyTracks(spotifyClientInfo* clientInformation) :
-	base(clientInformation)
-{
-	
-	
-};
+
 /*
 */
 std::string spotifyTracks::getTrackAudioAnalysis(std::string ID) {
@@ -28,7 +22,7 @@ std::string spotifyTracks::getTrackAudioAnalysis(std::string ID) {
 
 	std::string readBuffer = performCURLGET(url, authenticityToken);
 
-	return errorChecking(readBuffer,  __func__);
+	return errorChecking(readBuffer, __func__);
 }
 
 /*
@@ -40,7 +34,7 @@ std::string spotifyTracks::getTracksAudioAnalysis(std::string IDs) {
 
 	std::string readBuffer = performCURLGET(url, authenticityToken);
 
-	return errorChecking(readBuffer,  __func__);
+	return errorChecking(readBuffer, __func__);
 }
 
 /*
@@ -52,7 +46,7 @@ std::string spotifyTracks::getTrackAudioFeatures(std::string ID) {
 
 	std::string readBuffer = performCURLGET(url, authenticityToken);
 
-	return errorChecking(readBuffer,  __func__);
+	return errorChecking(readBuffer, __func__);
 }
 
 
@@ -68,10 +62,10 @@ std::string spotifyTracks::getTrack(std::string ID, std::string market) {
 
 	std::string readBuffer = performCURLGET(url, authenticityToken);
 
-	return errorChecking(readBuffer,  __func__);
+	return errorChecking(readBuffer, __func__);
 }
 
-spotifyTrackObject spotifyTracks::getTrack(std::string ID, std::string market, std::string ignore) {
+/*spotifyTrackObject spotifyTracks::getTrack(std::string ID, std::string market, std::string ignore) {
 	//https://developer.spotify.com/console/get-track/
 
 	std::string url = "https://api.spotify.com/v1/tracks/" + ID;
@@ -87,15 +81,14 @@ spotifyTrackObject spotifyTracks::getTrack(std::string ID, std::string market, s
 	spotifyTrackObject tempObj;
 
 	return tempObj;
-}
+}*/
 
 
-
-std::string spotifyTracks::getTracks(std::string IDs,std::string market) {
-	std::string url="";
+std::string spotifyTracks::getTracks(std::string IDs, std::string market) {
+	std::string url = "";
 
 	if (market != "") {
-		url += "https://api.spotify.com/v1/tracks/?market=" + market+"&ids="+IDs;
+		url += "https://api.spotify.com/v1/tracks/?market=" + market + "&ids=" + IDs;
 
 	}
 	else {
@@ -104,6 +97,6 @@ std::string spotifyTracks::getTracks(std::string IDs,std::string market) {
 
 	std::string readBuffer = performCURLGET(url, authenticityToken);
 
-	return errorChecking(readBuffer,  __func__);
+	return errorChecking(readBuffer, __func__);
 
 }

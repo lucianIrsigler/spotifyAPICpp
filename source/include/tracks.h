@@ -1,21 +1,20 @@
 #pragma once
-#include "base.h"
-#include "spotifyTrackObject.h"
+#include <string>
+#include "spotifyBase.h"
 
 
 /*
 	Class used for searching information on tracks
 */
 class spotifyTracks :
-    public base
+	public SpotifyBase
 {
 public:
 	spotifyTracks();
 	spotifyTracks(
 		std::string authToken, std::string userspotifyClientID, std::string userClientSecret, std::string userRedirect);
-	spotifyTracks(spotifyClientInfo* clientInformation);
 
-    //GET
+	//GET
 
 	/*
 		Does an audio analysis of a track
@@ -23,7 +22,7 @@ public:
 		@returns JSON response containing the audio analysis
 	*/
 	std::string getTrackAudioAnalysis(std::string ID);
-	
+
 	/*
 		Does an audio analysis of several track
 		@param IDs->IDs of the tracks(comma-seperated)
@@ -31,7 +30,7 @@ public:
 
 	*/
 	std::string getTracksAudioAnalysis(std::string IDs);
-	
+
 	/*
 		Gets audio feature for a track
 		@param ID->ID of track
@@ -46,7 +45,7 @@ public:
 		@returns JSON response containing track information
 	*/
 	std::string getTrack(std::string ID, std::string market);
-	spotifyTrackObject getTrack(std::string ID, std::string market, std::string ignore);
+	//spotifyTrackObject getTrack(std::string ID, std::string market, std::string ignore);
 
 
 	/*

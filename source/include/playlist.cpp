@@ -1,23 +1,15 @@
-#include "spotifyPlaylist.h"
+#include "pch.h"
+#include "playlist.h"
 
-spotifyPlaylist::spotifyPlaylist() :base()
+spotifyPlaylist::spotifyPlaylist() :SpotifyBase()
 {
     
 };
 
 spotifyPlaylist::spotifyPlaylist(
     std::string authToken, std::string userspotifyClientID, std::string userClientSecret, std::string userRedirect) :
-    base(authToken, userspotifyClientID, userClientSecret, userRedirect)
+    SpotifyBase(authToken, userspotifyClientID, userClientSecret, userRedirect)
 {
-    
-    
-};
-
-spotifyPlaylist::spotifyPlaylist(spotifyClientInfo* clientInformation) :
-    base(clientInformation)
-{
-    
-    
 };
 
 
@@ -50,54 +42,6 @@ std::string spotifyPlaylist::getUserPlaylists(int limit, int offset) {
     std::string readBuffer = performCURLGET("https://api.spotify.com/v1/me/playlists?" + std::to_string(limit), authenticityToken);
 
     return errorChecking(readBuffer,  __func__);
-}
-
-
-std::vector<spotifyPlaylistObject>spotifyPlaylist::getUserPlaylistsObjects() {
-    std::string playlists = getUserPlaylists();
-
-    std::vector<spotifyPlaylistObject>objects;
-
-    if (playlists[0] != '{') {
-        std::cout << playlists << std::endl;
-        return objects;
-    }
-    
-    int start = 0;
-
-    while (playlists.find("\"name\"", start) != std::string::npos) {
-        spotifyPlaylistObject temp;
-
-        int first = playlists.find("\"name\"", start);
-
-        temp.name = findTerm("\"name\"", playlists, 4, first, "\"");
-        temp.href = findTerm("\"href\"", playlists, 4, first, "\"");
-        temp.description = findTerm("\"description\"", playlists, 4, first, "\"");
-        temp.id = findTerm("\"id\"", playlists, 4, first, "\"");
-        temp.snapshotID = findTerm("\"snapshot_id\"", playlists, 4, first, "\"");
-
-        std::string isPublic = findTerm("\"public\"", playlists, 3, first, "\n");
-
-        (isPublic == "true,") ? temp.isPublic = true : temp.isPublic = false;
-
-        std::string url = findTerm("\"external_urls\"", playlists, 3, first + 200, "}");
-
-        temp.playlistURL = findTerm("\"spotify\"", url, 4, 0, "\"");
-
-        int startTrack = playlists.find("\"tracks\"", first);
-
-        std::string trackInfo = findTerm("\"tracks\"", playlists, 0, first, "}");
-
-        temp.tracksURL = findTerm("\"href\"", trackInfo, 4, 0, "\"");
-
-        temp.totalNumberOfTracks = std::stoi(findTerm("\"total\"", trackInfo, 3, 0, "\n"));
-  
-        objects.push_back(temp);
-
-        start = first + 1;
-    }
-
-    return objects;
 }
 
 
@@ -202,7 +146,6 @@ void spotifyPlaylist::addItemToPlaylist(std::string playlistID, std::string URI,
 
     std::string JSONobject = json::convertToJSONObject(temp);
 
-
     std::string postData = "position" + std::to_string(position);
 
     if (URI != "") {
@@ -264,7 +207,8 @@ void spotifyPlaylist::changePlaylistDetails(std::string playlistID, std::string 
 
     std::vector<std::string>areas = { "name",name,"description",description,"public", publicString };
 
-    std::string temp = json::convertToJSONString("{\"0\":\"1\",\"2\":\"3\",\"4\":5}", areas);
+    std::string temp = json::convertToJSONString("{\"0\":\"1\",\n  \"2\":\"3\",\n  \"4\":5\n}", areas);
+    //std::string temp = R"({"name":"vibey","description":"description","public":true})";
 
     std::string JSONobject = json::convertToJSONObject(temp);
 
@@ -272,11 +216,8 @@ void spotifyPlaylist::changePlaylistDetails(std::string playlistID, std::string 
 
     std::string readBuffer = performCURLPUT(url, JSONobject, authenticityToken);
 
+    std::cout << JSONobject << std::endl;
+    std::cout << temp << std::endl;
+    std::cout << readBuffer << std::endl;
     errorChecking(readBuffer, __func__);
-}
-
-std::string spotifyPlaylist::findTerm(std::string term, std::string text, int offsetFromEndOfSearch, int startIndex, std::string charToEnd) {
-    int startOfItem = text.find(term, startIndex);
-    int offset = startOfItem + term.length() + offsetFromEndOfSearch;
-    return text.substr(offset, text.find(charToEnd, offset) - offset);
 }

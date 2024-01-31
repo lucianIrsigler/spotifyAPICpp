@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "scopes.h"
 
 std::vector<std::string> spotifyScopes() {
@@ -25,6 +26,7 @@ std::vector<std::string> spotifyScopes() {
 
     return availableScopes;
 }
+
 
 
 bool isValidScope(std::string scope) {
@@ -56,15 +58,11 @@ bool isValidScopes(std::string scopesToCheck) {
 
         //checks if scope is valid
         if (std::find(scopes.begin(), scopes.end(), message) != scopes.end()) {
-            /* v contains x */
             first = scopesToCheck.find(' ', first + 1);
         }
         else {
-            /* v does not contain x
-            Scopes are invalid thus*/
             return false;
         }
     }
-
     return true;
 }

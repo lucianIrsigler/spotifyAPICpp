@@ -1,26 +1,16 @@
-#include "spotifyPlayer.h"
+#include "pch.h"
+#include "player.h"
 
 
-spotifyPlayer::spotifyPlayer() :base()
+spotifyPlayer::spotifyPlayer() :SpotifyBase()
 {
-    
 };
 
 spotifyPlayer::spotifyPlayer(
     std::string authToken, std::string userspotifyClientID, std::string userClientSecret, std::string userRedirect) :
-    base(authToken, userspotifyClientID, userClientSecret, userRedirect)
+    SpotifyBase(authToken, userspotifyClientID, userClientSecret, userRedirect)
 {
-    
-    
 };
-
-spotifyPlayer::spotifyPlayer(spotifyClientInfo * clientInformation) :
-    base(clientInformation)
-{
-    
-    
-};
-
 
 //Player
 
@@ -31,7 +21,8 @@ std::string spotifyPlayer::getUserRecentPlaying(int limit) {
 
     //acquires user data and stores in variable readBuffer
     std::string readBuffer = performCURLGET("https://api.spotify.com/v1/me/player/recently-played", authenticityToken);
-    return errorChecking(readBuffer,  __func__);
+
+    return errorChecking(readBuffer, __func__);
 }
 
 /*
@@ -39,38 +30,49 @@ std::string spotifyPlayer::getUserRecentPlaying(int limit) {
 */
 std::string spotifyPlayer::getUserPlaybackState(std::string additional_types, std::string market) {
     //https://developer.spotify.com/console/get-user-player/
-    
-    //user-read-playback-state
-
     //acquires user data and stores in variable readBuffer
-    std::string readBuffer = performCURLGET("	https://api.spotify.com/v1/me/player", authenticityToken);
+    std::string readBuffer = performCURLGET("https://api.spotify.com/v1/me/player", authenticityToken);
 
-    return errorChecking(readBuffer,  __func__);
+    return errorChecking(readBuffer, __func__);
 }
 
 /*
 
 */
-std::string spotifyPlayer::getAvialableDevices() {
+std::string spotifyPlayer::getAvailableDevices() {
     //https://developer.spotify.com/console/get-users-available-devices/
     //user-read-playback-state
 
     std::string readBuffer = performCURLGET("https://api.spotify.com/v1/me/player/devices", authenticityToken);
 
-
-    return errorChecking(readBuffer,  __func__);
+    return errorChecking(readBuffer, __func__);
 }
 
 /*
 
 */
-std::string spotifyPlayer::getUserCurrentPlaying() {
+std::vector<std::string> spotifyPlayer ::getQueueSongs() {
+    //https://developer.spotify.com/documentation/web-api/reference/get-queue
+    //user-read-playback-state
+    std::string readBuffer = performCURLGET("https://api.spotify.com/v1/me/player/queue", authenticityToken);
+
+    //spotify:track:[a-zA-z0-9]+
+    std::regex pattern ("spotify:track:[a-zA-z0-9]+");
+
+    auto results = regexUtility::executeRegex(pattern, readBuffer);
+
+    return results;
+}
+/*
+
+*/
+const std::string spotifyPlayer::getUserCurrentPlaying() {
     //user-read-currently-playing
     // 
     //acquires user data and stores in variable readBuffer
     std::string readBuffer = performCURLGET("https://api.spotify.com/v1/me/player/currently-playing", authenticityToken);
-    
-    return errorChecking(readBuffer,  __func__);
+
+    return errorChecking(readBuffer, __func__);
 }
 
 
@@ -87,9 +89,7 @@ void spotifyPlayer::skipToNextTrack(std::string deviceID) {
     errorChecking(readBuffer, __func__);
 }
 
-/*
 
-*/
 void spotifyPlayer::skipToPreviousTrack(std::string deviceID) {
     //https://developer.spotify.com/console/post-previous/
 
@@ -100,12 +100,11 @@ void spotifyPlayer::skipToPreviousTrack(std::string deviceID) {
     errorChecking(readBuffer, __func__);
 }
 
-/*
 
-*/
 void spotifyPlayer::addSongToUserQueue(std::string URI, std::string deviceID) {
-//https://developer.spotify.com/console/post-queue/
+    //https://developer.spotify.com/console/post-queue/
     //user-modify-playback-state
+
 
     std::string url = "https://api.spotify.com/v1/me/player/queue?uri=" + URI;
 
@@ -121,7 +120,7 @@ void spotifyPlayer::addSongToUserQueue(std::string URI, std::string deviceID) {
 /*
 
 */
-void spotifyPlayer::transferUserPlayback(std::string deviceIDs,bool startPlaying) {
+void spotifyPlayer::transferUserPlayback(std::string deviceIDs, bool startPlaying) {
     //https://developer.spotify.com/console/put-user-player/
     //user-modify-playback-state
 
@@ -131,7 +130,7 @@ void spotifyPlayer::transferUserPlayback(std::string deviceIDs,bool startPlaying
         ]
     }*/
 
-    std::string jsonRequest = "{\"device_ids\": [\""+ deviceIDs +"\"])";
+    std::string jsonRequest = "{\"device_ids\": [\"" + deviceIDs + "\"])";
 
     std::string jsonObject = json::convertToJSONObject(jsonRequest);
 
@@ -141,13 +140,62 @@ void spotifyPlayer::transferUserPlayback(std::string deviceIDs,bool startPlaying
 }
 
 
-/*
-
-*/
-void spotifyPlayer::resumeUserPlayback(std::string deviceID) noexcept {
+//user-modify-playback-state user-read-currently-playing
+void spotifyPlayer::resumeUserPlayback(std::string deviceID) {
     //https://developer.spotify.com/console/put-play/
 
+    // Gets current user's playing information
+    std::string currentPlaying = getUserCurrentPlaying();
 
+    //Gets spotify album uri
+    //std::string uri = extractValueFromString(currentPlaying, "uri", currentPlaying.find("available_markets"));
+
+    std::string uri = regexUtility::executeRegexString(regexUtility::albumRegex, currentPlaying);
+
+    //Get track number
+    std::string trackNumberString = extractNumberFromString(currentPlaying, "track_number");
+    
+    //"\"progress_ms\":\\s(\\d+)"
+    const std::regex progressTimeRegex("\"progress_ms\"\\s*:\\s*(\\d+)");
+    //Get progress ms
+    //std::string progress_ms = extractNumberFromString(currentPlaying, "progress_ms");
+    std::cout << currentPlaying << "\n";
+
+    std::string progress_msRegexMatch = regexUtility::executeRegexString(progressTimeRegex, currentPlaying);
+
+    std::string progress_ms = progress_msRegexMatch.substr(16,progress_msRegexMatch.length() - 16);
+
+    //Track numbers use 0 indexing
+    std::string trackNumber = std::to_string(std::stoi(trackNumberString) - 1);
+
+    //converts the string to JSON
+    std::vector<std::string>areas = {uri,trackNumber,progress_ms };
+
+    std::string temp = json::convertToJSONString(
+        "{\"context_uri\":\"0\",\"offset\": {\"position\": 1},\"position_ms\": 2}", areas);
+
+    std::cout << temp<<"\n";
+    //std::string JSONobject = json::convertToJSONObject(temp);
+
+    std::string readBuffer;
+
+    readBuffer = performCURLPUT("https://api.spotify.com/v1/me/player/play", temp, authenticityToken);
+
+    errorChecking(readBuffer, __func__);
+}
+
+
+void spotifyPlayer::playTrack(const std::string albumURI, int trackNumber) {
+    //https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback
+    std::vector<std::string>areas{ albumURI,std::to_string(trackNumber) };
+
+    std::string temp = "{\"context_uri\":\"" + areas[0] + "\",\"offset\": {\"position\": " + areas[1] + "},\"position_ms\": 0}\"";
+
+    std::string readBuffer;
+
+    readBuffer = performCURLPUT("https://api.spotify.com/v1/me/player/play", temp, authenticityToken);
+
+    errorChecking(readBuffer, __func__);
 }
 
 /*
@@ -155,11 +203,8 @@ user-modify-playback-state
 */
 void spotifyPlayer::pauseUserPlayback(std::string deviceID) noexcept {
     //https://developer.spotify.com/console/put-pause/
-
-
     std::string readBuffer = performCURLPUT("https://api.spotify.com/v1/me/player/pause", "", authenticityToken);
 }
-
 
 
 /*
@@ -169,10 +214,8 @@ void spotifyPlayer::seekToPositionCurrentTrack() {
 
 }
 
-/*
 
-*/
-void spotifyPlayer::setRepeatOnPlayback(std::string state, std::string deviceID) {
+void spotifyPlayer::setRepeatOnPlayback(const std::string state, std::string deviceID) {
     //https://developer.spotify.com/console/put-repeat/
 
     /*track will repeat the current track.
@@ -187,7 +230,7 @@ void spotifyPlayer::setRepeatOnPlayback(std::string state, std::string deviceID)
         }
 
         std::string readBuffer = performCURLPUT(url, "", authenticityToken);
-        std::cout << readBuffer << std::endl;
+
         errorChecking(readBuffer, __func__);
     }
     else {
@@ -223,7 +266,7 @@ void spotifyPlayer::setVolumeOnPlayback(int volume, std::string deviceID) {
 /*
 
 */
-void spotifyPlayer::toggleShuffleOnPlayback(bool shuffle, std::string deviceID) {
+void spotifyPlayer::toggleShuffleOnPlayback(std::string deviceID) {
     // https://developer.spotify.com/console/put-shuffle/
 
     /*
@@ -232,13 +275,17 @@ void spotifyPlayer::toggleShuffleOnPlayback(bool shuffle, std::string deviceID) 
     */
 
     //user-modify-playback-state
-
-
+    
+    //toggle shuffleState
+    toggleShuffle = !toggleShuffle;
+    
     std::string state;
+    std::string device;
 
-    shuffle ? state = "true" : state = "false";
+    toggleShuffle ? state = "true" : state = "false";
+    deviceID == "" ? device = "" : device = "&device_id=" + deviceID;
 
-    std::string url = "https://api.spotify.com/v1/me/player/shuffle?state=" + state + "&&device_id=" + deviceID;
+    std::string url = "https://api.spotify.com/v1/me/player/shuffle?state=" + state+device;
 
     std::string readBuffer = performCURLPUT(url, "", authenticityToken);
 

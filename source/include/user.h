@@ -1,18 +1,18 @@
 #pragma once
-#include "base.h"
+#include "spotifyBase.h"
 
 /*
 	Class for interacting with user info
 */
 class spotifyUser :
-    public base
+	public SpotifyBase
 {
 public:
 	//User info
 	spotifyUser();
 	spotifyUser(
 		std::string authToken, std::string userspotifyClientID, std::string userClientSecret, std::string userRedirect);
-	spotifyUser(spotifyClientInfo* clientInformation);
+
 
 	/*
 		Performs a cURL request for user data.Scopes:NONE
@@ -49,7 +49,7 @@ public:
 		@returns userInfo->user's profile picture source
 	*/
 	std::string getUserProfilePictureURL();
-	
+
 	/*
 		Performs a cURL request for the user's type.Scopes:NONE
 		@returns userInfo->user's type
@@ -70,6 +70,6 @@ public:
 		@param offset->Offset from the first
 		@returns JSON response containing info about top tracks/artists
 	*/
-	std::string getUserTopItems(std::string type, std::string time_range="medium_term", int limit = 10, int offset = 0);
+	std::string getUserTopItems(std::string type, std::string time_range = "medium_term", int limit = 10, int offset = 0);
 };
 

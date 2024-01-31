@@ -2,10 +2,15 @@
 #include <string>
 #include <fstream>
 
+#define loggingFile "SPOTIFYLOG.txt";
+
+/*
+    Logs text to fix
+*/
 static void spotifyLogToFile(std::string message) {
-    char filename[] = "SPOTIFYLOG.txt";
+    char filename[] = loggingFile;
     std::ofstream file;
     file.open(filename, std::fstream::app);
-    file << "\n" << message << "\n";
+    file << message << "\n";
     file.close();
 }
